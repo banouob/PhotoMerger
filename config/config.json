@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "officers": [
+    "陳OO",
+    "林OO",
+    "王OO"
+  ],
+  "locations": [
+    "臺1線100K",
+    "中山路口",
+    "高速公路南下80K"
+  ],
+  "canvas_size": [
+    2400,
+    1600
+  ],
+  "info_card_size": [
+    800,
+    1600
+  ],
+  "font_size": 32,
+  "font_family": "kaiu",
+  "default_arrow_color": "#FF0000",
+  "default_arrow_width": 15,
+  "auto_save": false,
+  "output_quality": 95
+}

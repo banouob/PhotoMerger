@@ -106,12 +106,11 @@ PhotoMerger/
 │
 ├── ui/                              # 界面層
 │   ├── mode_selector.py             # 模式選擇介面
-│   ├── shared/                      # 共用 UI 元件
-│   │   ├── graphics_items.py        # ResizablePixmapItem 基類
-│   │   └── ocr_install_dialog.py    # OCR 安裝提示對話框
+│   ├── shared/                      # 共用 UI 元件 (保留擴充用)
 │   ├── p52/                         # 警52模式 UI
 │   │   ├── main_window.py           # + OCR 按鈕整合
-│   │   └── editor_canvas.py         # + get_subimage_pil()
+│   │   ├── editor_canvas.py         # + get_subimage_pil()
+│   │   └── graphics_items.py        # ResizablePixmapItem
 │   └── grid4/                       # 四格模式 UI
 │       ├── main_window.py
 │       ├── canvas_view.py
