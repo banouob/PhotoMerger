@@ -219,6 +219,10 @@ class CanvasView(QGraphicsView):
             self.zoom_factor = 1.0
             self.user_zoomed = False
 
+            # 清空編輯歷史（防止撤銷到前一案件的殘留資料）
+            self.edit_history.clear()
+            self.history_changed.emit(False, False)
+
         except Exception as e:
             # 載入失敗，顯示錯誤佔位符
             error_text = f"載入失敗\n\n{Path(image_path).name}\n\n錯誤: {e}"
