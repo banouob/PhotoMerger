@@ -241,7 +241,7 @@ class CanvasView(QGraphicsView):
 
     def _save_current_state_to_data_manager(self):
         """儲存當前圖片的編輯狀態到 DataManager"""
-        from core.data_manager import get_data_manager
+        from core.grid4.data_manager import get_data_manager
 
         data_manager = get_data_manager()
         current_case = data_manager.get_current_case()
@@ -284,7 +284,7 @@ class CanvasView(QGraphicsView):
 
     def _restore_state_from_data_manager(self):
         """從 DataManager 恢復圖片的編輯狀態"""
-        from core.data_manager import get_data_manager
+        from core.grid4.data_manager import get_data_manager
 
         data_manager = get_data_manager()
         current_case = data_manager.get_current_case()

@@ -402,7 +402,7 @@ def get_data_manager() -> DataManager:
         DataManager 例項
 
     Examples:
-        >>> from core.data_manager import get_data_manager
+        >>> from core.grid4.data_manager import get_data_manager
         >>> dm = get_data_manager()
         >>> dm.scan_root_folder("D:/案件資料夾")
     """

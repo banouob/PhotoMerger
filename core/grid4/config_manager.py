@@ -309,7 +309,7 @@ def get_config() -> ConfigManager:
         ConfigManager 例項
 
     Examples:
-        >>> from core.config_manager import get_config
+        >>> from core.grid4.config_manager import get_config
         >>> config = get_config()
         >>> font_size = config.get("font_size")
     """
