@@ -527,6 +527,44 @@ class EditorCanvas(QGraphicsView):
             "source_roi_rect": source_roi,
         }
 
+    def get_subimage_pil(self) -> Optional[Image.Image]:
+        """
+        取得當前子圖的原始裁切 PIL Image（用於 OCR）
+
+        將 Scene 座標 (4096x3000) 映射回原始圖片像素座標後裁切。
+
+        Returns:
+            裁切後的 PIL Image，若無子圖則回傳 None
+        """
+        if not self.current_subimage or not self.original_pil_image:
+            return None
+
+        source_roi = self.current_subimage.source_roi
+        if not source_roi:
+            return None
+
+        # Scene 座標 → 原始圖片像素座標
+        orig_w, orig_h = self.original_pil_image.size
+        scale_x = orig_w / self.SCENE_WIDTH
+        scale_y = orig_h / self.SCENE_HEIGHT
+
+        sx = int(source_roi.x() * scale_x)
+        sy = int(source_roi.y() * scale_y)
+        sw = int(source_roi.width() * scale_x)
+        sh = int(source_roi.height() * scale_y)
+
+        # 邊界檢查
+        sx = max(0, sx)
+        sy = max(0, sy)
+        if sx + sw > orig_w:
+            sw = orig_w - sx
+        if sy + sh > orig_h:
+            sh = orig_h - sy
+        if sw <= 0 or sh <= 0:
+            return None
+
+        return self.original_pil_image.crop((sx, sy, sx + sw, sy + sh))
+
     def clear(self):
         """
         清空畫布

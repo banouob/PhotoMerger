@@ -28,6 +28,7 @@ from PyQt6.QtCore import Qt, QTimer
 from ui.p52.editor_canvas import EditorCanvas
 from core.p52.data_manager import DataManager
 from core.p52.image_processor import ImageProcessor
+from core.ocr_worker import OcrManager
 from utils.validators import sanitize_filename
 import os
 
@@ -55,6 +56,9 @@ class MainWindow(QMainWindow):
         self.data_manager = data_manager
         self.image_processor = image_processor
         self.date_str = data_manager.date_str  # 從data_manager獲取日期
+
+        # OCR 辨識管理器
+        self.ocr_manager = OcrManager()
 
         # 圖像增強防抖定時器
         self.enhancement_timer = QTimer()
@@ -107,6 +111,10 @@ class MainWindow(QMainWindow):
         self.plate_input = QLineEdit()
         self.plate_input.setPlaceholderText("例如: ABC123")
 
+        # OCR 辨識車牌按鈕
+        self.ocr_button = QPushButton("辨識車牌")
+        self.ocr_button.setToolTip("從框選區域自動辨識車牌號碼")
+
         # 保存按鈕
         self.save_button = QPushButton("保存 (Ctrl+S)")
         self.save_button.setShortcut("Ctrl+S")
@@ -118,6 +126,7 @@ class MainWindow(QMainWindow):
         # 添加到右側佈局
         right_layout.addWidget(plate_label)
         right_layout.addWidget(self.plate_input)
+        right_layout.addWidget(self.ocr_button)
         right_layout.addWidget(self.save_button)
         right_layout.addWidget(self.severe_checkbox)
 
@@ -201,6 +210,7 @@ class MainWindow(QMainWindow):
         """
         self.photo_list.currentRowChanged.connect(self._on_photo_selected)
         self.save_button.clicked.connect(self._on_save_clicked)
+        self.ocr_button.clicked.connect(self._on_ocr_clicked)
 
         # 圖像增強滑桿連接
         self.brightness_slider.valueChanged.connect(self._on_enhancement_changed)
@@ -313,6 +323,27 @@ class MainWindow(QMainWindow):
             self.contrast_slider.setValue(params.get("contrast", 0))
             self.saturation_slider.setValue(params.get("saturation", 0))
             self.sharpness_slider.setValue(params.get("sharpness", 0))
+
+    def _on_ocr_clicked(self):
+        """
+        OCR 辨識車牌按鈕點擊事件
+
+        從畫布的框選區域裁切 PIL Image，送入 OcrManager 辨識，
+        辨識結果自動填入車牌輸入框。
+        """
+        # 取得框選區域的 PIL Image
+        pil_image = self.canvas.get_subimage_pil()
+        if not pil_image:
+            QMessageBox.warning(self, "提示", "請先在畫布上框選車牌區域！")
+            return
+
+        # 執行 OCR 辨識
+        result = self.ocr_manager.recognize_plate(pil_image)
+
+        if result:
+            self.plate_input.setText(result)
+        else:
+            QMessageBox.information(self, "辨識結果", "未能辨識出車牌號碼，請手動輸入。")
 
     def _on_save_clicked(self):
         """
