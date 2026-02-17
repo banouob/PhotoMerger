@@ -59,6 +59,8 @@ class MainWindow(QMainWindow):
 
         # OCR 辨識管理器
         self.ocr_manager = OcrManager()
+        self.ocr_manager.ocr_finished.connect(self._on_ocr_result)
+        self.ocr_manager.ocr_error.connect(self._on_ocr_error)
 
         # 圖像增強防抖定時器
         self.enhancement_timer = QTimer()
@@ -328,8 +330,8 @@ class MainWindow(QMainWindow):
         """
         OCR 辨識車牌按鈕點擊事件
 
-        從畫布的框選區域裁切 PIL Image，送入 OcrManager 辨識，
-        辨識結果自動填入車牌輸入框。
+        從畫布的框選區域裁切 PIL Image，送入 OcrManager 非同步辨識。
+        結果透過 ocr_finished / ocr_error 信號回傳。
         """
         # 取得框選區域的 PIL Image
         pil_image = self.canvas.get_subimage_pil()
@@ -337,13 +339,16 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "提示", "請先在畫布上框選車牌區域！")
             return
 
-        # 執行 OCR 辨識
-        result = self.ocr_manager.recognize_plate(pil_image)
+        # 非同步請求 OCR 辨識
+        self.ocr_manager.request_ocr(pil_image)
 
-        if result:
-            self.plate_input.setText(result)
-        else:
-            QMessageBox.information(self, "辨識結果", "未能辨識出車牌號碼，請手動輸入。")
+    def _on_ocr_result(self, text: str):
+        """OCR 辨識完成，自動填入車牌輸入框"""
+        self.plate_input.setText(text)
+
+    def _on_ocr_error(self, msg: str):
+        """OCR 辨識錯誤"""
+        QMessageBox.information(self, "辨識結果", f"未能辨識出車牌號碼：{msg}")
 
     def _on_save_clicked(self):
         """
