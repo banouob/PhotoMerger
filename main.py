@@ -81,7 +81,7 @@ def launch_p52_mode(app: QApplication):
 
     # 4. 初始化元件
     data_manager = DataManager(police_photo, target_photos, roc_date, ad_date)
-    image_processor = ImageProcessor()
+    image_processor = ImageProcessor(police_photo)
 
     # 5. 啟動主視窗
     window = MainWindow(data_manager, image_processor)
