@@ -1,0 +1,124 @@
+name: 建置 Windows 獨立執行檔
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      # ── 1. 取得程式碼 ──────────────────────────────────────────────────────
+      - name: 取得程式碼
+        uses: actions/checkout@v4
+
+      # ── 2. 安裝 Python 3.12 ───────────────────────────────────────────────
+      - name: 安裝 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      # ── 3. 升級 pip 與建置工具 ────────────────────────────────────────────
+      - name: 升級 pip
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      # ── 4. 安裝核心依賴 ───────────────────────────────────────────────────
+      - name: 安裝核心依賴
+        run: pip install -r requirements.txt
+
+      # ── 5. 安裝 OCR 依賴 ──────────────────────────────────────────────────
+      # PaddlePaddle CPU 版本（警察部署環境為 CPU，無需 CUDA）
+      # opencv-python 為 PaddleOCR 內部依賴
+      - name: 安裝 OCR 依賴（PaddlePaddle + PaddleOCR）
+        run: |
+          pip install paddlepaddle>=3.0.0
+          pip install paddleocr>=3.0.0
+          pip install opencv-python>=4.8.0
+
+      # ── 6. 安裝 PyInstaller ───────────────────────────────────────────────
+      - name: 安裝 PyInstaller
+        run: pip install pyinstaller>=6.0.0 pyinstaller-hooks-contrib
+
+      # ── 7. 驗證關鍵模組可正常匯入 ─────────────────────────────────────────
+      - name: 驗證模組匯入
+        run: |
+          python -c "import PyQt6; print('PyQt6 OK')"
+          python -c "import PIL; print('Pillow OK')"
+          python -c "import cv2; print('OpenCV OK')"
+          python -c "import paddleocr; print('PaddleOCR OK')"
+          python -c "from utils.paths import is_frozen; print('paths.py OK')"
+
+      # ── 8. 使用 PyInstaller 建置執行檔 ────────────────────────────────────
+      - name: PyInstaller 建置
+        env:
+          PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
+          FLAGS_use_mkldnn: "0"
+        run: pyinstaller PhotoMerger.spec --noconfirm
+
+      # ── 9. 驗證建置結果 ───────────────────────────────────────────────────
+      - name: 驗證建置結果
+        shell: pwsh
+        run: |
+          if (Test-Path "dist\PhotoMerger\PhotoMerger.exe") {
+            $size = (Get-Item "dist\PhotoMerger\PhotoMerger.exe").length / 1MB
+            Write-Host ("建置成功！EXE 大小: {0:N1} MB" -f $size)
+          } else {
+            Write-Error "建置失敗：找不到 PhotoMerger.exe"
+            exit 1
+          }
+
+      # ── 10. 統計輸出資料夾大小 ────────────────────────────────────────────
+      - name: 統計輸出大小
+        shell: pwsh
+        run: |
+          $size = (Get-ChildItem -Path "dist\PhotoMerger" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host ("dist\PhotoMerger 資料夾大小: {0:N1} MB" -f $size)
+
+      # ── 11. 壓縮成 ZIP ────────────────────────────────────────────────────
+      - name: 壓縮輸出資料夾
+        shell: pwsh
+        run: Compress-Archive -Path dist\PhotoMerger\* -DestinationPath PhotoMerger-Windows.zip
+
+      # ── 12. 上傳 Artifact（每次推送皆可下載，保留 14 天）─────────────────
+      - name: 上傳建置 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhotoMerger-Windows-${{ github.sha }}
+          path: PhotoMerger-Windows.zip
+          retention-days: 14
+          if-no-files-found: error
+
+      # ── 13. 建立 GitHub Release（僅限版本標籤觸發）─────────────────────
+      - name: 建立 GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PhotoMerger-Windows.zip
+          name: "PhotoMerger ${{ github.ref_name }}"
+          body: |
+            ## PhotoMerger ${{ github.ref_name }} - Windows 獨立執行檔
+
+            ### 安裝說明
+            1. 下載並解壓縮 `PhotoMerger-Windows.zip`
+            2. 執行資料夾內的 `PhotoMerger.exe`
+            3. 首次使用 **OCR 車牌辨識**功能時，程式會自動下載語言模型（約 100-200MB）
+               - 需要網路連線，下載約需 1-3 分鐘
+               - 模型下載後快取於 `%USERPROFILE%\.paddleocr\`，後續**無需重新下載**
+
+            ### 系統需求
+            - Windows 10 / 11（64 位元）
+            - 首次 OCR 使用需要網路連線
+
+            ### 功能
+            - **警52模式**：警察照片 + 目標照片雙圖合併，支援車牌 OCR 辨識
+            - **四格模式**：四張照片批次合成拼圖
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
