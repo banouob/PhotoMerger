@@ -91,6 +91,11 @@ class ControlPanel(QWidget):
         plate_layout.addWidget(self.btn_ocr)
         form_layout.addRow("🚗 違規車號:", plate_layout)
 
+        # 信心度標籤
+        self.label_confidence = QLabel("")
+        self.label_confidence.setStyleSheet("color: gray; font-size: 10px;")
+        form_layout.addRow("", self.label_confidence)
+
         # 承辦人 (可記憶下拉框)
         self.combo_officer = QComboBox()
         self.combo_officer.setEditable(True)
@@ -378,6 +383,7 @@ class ControlPanel(QWidget):
         """
         # 強制更新車牌欄位：若 metadata 無 "plate"，填入空字串達到清空效果
         self.edit_plate.setText(metadata.get("plate", ""))
+        self.label_confidence.clear()
 
         if "officer" in metadata:
             self.combo_officer.setCurrentText(metadata["officer"])
@@ -391,6 +397,7 @@ class ControlPanel(QWidget):
     def clear(self):
         """清空控制面板"""
         self.edit_plate.clear()
+        self.label_confidence.clear()
         self.combo_officer.setCurrentIndex(0)
         self.combo_location.setCurrentIndex(0)
         self.edit_datetime.clear()

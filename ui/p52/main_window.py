@@ -117,6 +117,10 @@ class MainWindow(QMainWindow):
         self.ocr_button = QPushButton("辨識車牌")
         self.ocr_button.setToolTip("從框選區域自動辨識車牌號碼")
 
+        # 信心度標籤
+        self.confidence_label = QLabel("")
+        self.confidence_label.setStyleSheet("color: gray; font-size: 10px;")
+
         # 保存按鈕
         self.save_button = QPushButton("保存 (Ctrl+S)")
         self.save_button.setShortcut("Ctrl+S")
@@ -129,6 +133,7 @@ class MainWindow(QMainWindow):
         right_layout.addWidget(plate_label)
         right_layout.addWidget(self.plate_input)
         right_layout.addWidget(self.ocr_button)
+        right_layout.addWidget(self.confidence_label)
         right_layout.addWidget(self.save_button)
         right_layout.addWidget(self.severe_checkbox)
 
@@ -310,6 +315,7 @@ class MainWindow(QMainWindow):
 
         # 清空車牌輸入框 (防止誤用)
         self.plate_input.clear()
+        self.confidence_label.clear()
 
         # 重置"嚴重超速"核取方塊為默認狀態 (防呆機制)
         self.severe_checkbox.setChecked(False)
@@ -342,9 +348,10 @@ class MainWindow(QMainWindow):
         # 非同步請求 OCR 辨識
         self.ocr_manager.request_ocr(pil_image)
 
-    def _on_ocr_result(self, text: str):
-        """OCR 辨識完成，自動填入車牌輸入框"""
+    def _on_ocr_result(self, text: str, score: float):
+        """OCR 辨識完成，自動填入車牌輸入框，並顯示信心度"""
         self.plate_input.setText(text)
+        self.confidence_label.setText(f"信心度: {score:.2f}")
 
     def _on_ocr_error(self, msg: str):
         """OCR 辨識錯誤"""

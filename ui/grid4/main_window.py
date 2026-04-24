@@ -610,12 +610,13 @@ class MainWindow(QMainWindow):
         # 送入背景辨識
         self.ocr_manager.request_ocr(pil_img)
 
-    def _on_ocr_finished(self, text: str):
+    def _on_ocr_finished(self, text: str, score: float):
         """OCR 辨識完成槽函式"""
         self.control_panel.edit_plate.setText(text)
+        self.control_panel.label_confidence.setText(f"信心度: {score:.2f}")
         self.control_panel.btn_ocr.setText("🔍 辨識")
         self.control_panel.btn_ocr.setEnabled(True)
-        self.statusbar.showMessage(f"辨識完成: {text}")
+        self.statusbar.showMessage(f"辨識完成: {text} (信心度: {score:.2f})")
 
     def _on_ocr_error(self, msg: str):
         """OCR 辨識錯誤槽函式"""

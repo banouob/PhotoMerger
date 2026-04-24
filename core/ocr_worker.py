@@ -27,8 +27,8 @@ class OcrWorker(QObject):
     # 訊號：觸發處理
     request_processing = pyqtSignal()
 
-    # 訊號：辨識完成 (辨識文字)
-    finished = pyqtSignal(str)
+    # 訊號：辨識完成 (辨識文字, 信心度)
+    finished = pyqtSignal(str, float)
 
     # 訊號：辨識錯誤 (錯誤訊息)
     error = pyqtSignal(str)
@@ -113,6 +113,7 @@ class OcrWorker(QObject):
 
             # 解析結果（相容 PaddleOCR v3.x PaddleX 格式 和 v2.x 舊格式）
             texts = []
+            scores = []
             if results:
                 for page in results:
                     if page is None:
@@ -124,9 +125,10 @@ class OcrWorker(QObject):
                         rec_texts = page.get("rec_texts", [])
                         rec_scores = page.get("rec_scores", [])
                         for i, text in enumerate(rec_texts):
-                            score = rec_scores[i] if i < len(rec_scores) else 0
+                            score = float(rec_scores[i]) if i < len(rec_scores) else 0.0
                             logger.info("OCR 辨識: %s (信心度: %.2f)", text, score)
                             texts.append(str(text))
+                            scores.append(score)
                         continue
 
                     # PaddleOCR v2.x 舊格式:
@@ -137,6 +139,7 @@ class OcrWorker(QObject):
                                 if isinstance(line, (list, tuple)) and len(line) >= 2:
                                     if isinstance(line[1], (tuple, list)):
                                         texts.append(str(line[1][0]))
+                                        scores.append(float(line[1][1]))
                             except (IndexError, KeyError, TypeError) as e:
                                 logger.warning("OCR 解析行失敗: %s, line=%s", e, line)
 
@@ -144,8 +147,9 @@ class OcrWorker(QObject):
                 # 合併所有辨識文字（車牌通常只有一行）
                 raw_text = "".join(texts).strip()
                 result_text = self._normalize_plate(raw_text)
-                logger.info("OCR 辨識完成: %s (原始: %s)", result_text, raw_text)
-                self.finished.emit(result_text)
+                avg_score = sum(scores) / len(scores) if scores else 0.0
+                logger.info("OCR 辨識完成: %s (原始: %s, 平均信心度: %.2f)", result_text, raw_text, avg_score)
+                self.finished.emit(result_text, avg_score)
             else:
                 logger.warning("OCR 未辨識到文字")
                 self.error.emit("未辨識到文字，請確認框選範圍包含車牌")
@@ -167,8 +171,8 @@ class OcrManager(QObject):
     - 提供統一的辨識介面
     """
 
-    # 訊號：辨識完成 (辨識文字)
-    ocr_finished = pyqtSignal(str)
+    # 訊號：辨識完成 (辨識文字, 信心度)
+    ocr_finished = pyqtSignal(str, float)
 
     # 訊號：辨識錯誤 (錯誤訊息)
     ocr_error = pyqtSignal(str)
@@ -209,10 +213,10 @@ class OcrManager(QObject):
         # 觸發背景處理
         self.worker.request_processing.emit()
 
-    @pyqtSlot(str)
-    def _on_ocr_finished(self, text: str):
+    @pyqtSlot(str, float)
+    def _on_ocr_finished(self, text: str, score: float):
         """辨識完成槽函式"""
-        self.ocr_finished.emit(text)
+        self.ocr_finished.emit(text, score)
 
     @pyqtSlot(str)
     def _on_ocr_error(self, msg: str):
