@@ -1,5 +1,10 @@
 {
   "version": "1.0.0",
+  "p52_officers": [
+    "0001陳OO",
+    "0002林OO",
+    "0003王OO"
+  ],
   "officers": [
     "陳OO",
     "林OO",

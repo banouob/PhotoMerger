@@ -4,8 +4,9 @@
 使用 Pillow 處理圖像:縮放、裁剪、合併和保存
 """
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from core.image_enhancement import apply_enhancements as _shared_apply_enhancements
+from utils.paths import get_font_path
 from typing import Tuple, Optional
 import os
 import logging
@@ -72,6 +73,7 @@ class ImageProcessor:
         subimage_position: Tuple[int, int],
         output_path: str,
         enhancement_params: Optional[dict] = None,
+        officer_text: Optional[str] = None,
     ) -> bool:
         """
         處理目標照片並與警52照片合併
@@ -134,6 +136,10 @@ class ImageProcessor:
             sub_x, sub_y = subimage_position
             processed_target.paste(subimage, (sub_x, sub_y))
 
+            # 5b. 繪製警員資訊文字（右上角）
+            if officer_text:
+                self._draw_officer_text(processed_target, officer_text)
+
             # 6. 創建 8192x3000 畫布
             canvas = Image.new("RGB", self.OUTPUT_SIZE, (255, 255, 255))
 
@@ -149,6 +155,27 @@ class ImageProcessor:
         except Exception as e:
             logger.info(f"圖像處理失敗: {e}")
             return False
+
+    def _draw_officer_text(self, img: Image.Image, text: str) -> None:
+        """在圖片右上角繪製警員文字（黑色描邊 + 黃色字）"""
+        draw = ImageDraw.Draw(img)
+        font_size = max(40, int(img.width * 0.015))
+
+        try:
+            font = ImageFont.truetype(str(get_font_path()), size=font_size)
+        except Exception:
+            font = ImageFont.load_default()
+
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        margin = max(30, int(img.width * 0.007))
+        x = img.width - text_w - margin
+        y = margin
+
+        # 黑色描邊（提升可讀性）
+        for dx, dy in ((-2, -2), (2, -2), (-2, 2), (2, 2)):
+            draw.text((x + dx, y + dy), text, font=font, fill="#000000")
+        draw.text((x, y), text, font=font, fill="#FFFF00")
 
     def get_police_photo_size(self) -> Tuple[int, int]:
         """

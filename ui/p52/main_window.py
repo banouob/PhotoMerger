@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QSlider,
     QCheckBox,
+    QComboBox,
 )
 from PyQt6.QtCore import Qt, QTimer
 from ui.p52.editor_canvas import EditorCanvas
@@ -30,7 +31,9 @@ from core.p52.data_manager import DataManager
 from core.p52.image_processor import ImageProcessor
 from core.ocr_worker import OcrManager
 from utils.validators import sanitize_filename
+from utils.paths import get_config_dir
 import os
+import json
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +59,9 @@ class MainWindow(QMainWindow):
         self.data_manager = data_manager
         self.image_processor = image_processor
         self.date_str = data_manager.date_str  # 從data_manager獲取日期
+
+        # 警員清單（從 config.json 載入）
+        self._p52_officers: list = self._load_p52_officers()
 
         # OCR 辨識管理器
         self.ocr_manager = OcrManager()
@@ -129,7 +135,28 @@ class MainWindow(QMainWindow):
         self.severe_checkbox = QCheckBox("嚴重超速")
         self.severe_checkbox.setChecked(False)  # 默認: 一般超速
 
+        # === 人員資訊控件 ===
+        officer_group = QGroupBox("人員資訊")
+        officer_layout = QVBoxLayout(officer_group)
+
+        officer_id_label = QLabel("警員編號:")
+        self.officer_id_combo = QComboBox()
+        self.officer_id_combo.setEditable(True)
+        self.officer_id_combo.setPlaceholderText("請選擇或輸入警員編號")
+        self.officer_id_combo.addItems(self._p52_officers)
+        self.officer_id_combo.setCurrentIndex(-1)
+
+        officer_name_label = QLabel("姓名:")
+        self.officer_name_edit = QLineEdit()
+        self.officer_name_edit.setPlaceholderText("自動填入或手動修改")
+
+        officer_layout.addWidget(officer_id_label)
+        officer_layout.addWidget(self.officer_id_combo)
+        officer_layout.addWidget(officer_name_label)
+        officer_layout.addWidget(self.officer_name_edit)
+
         # 添加到右側佈局
+        right_layout.addWidget(officer_group)
         right_layout.addWidget(plate_label)
         right_layout.addWidget(self.plate_input)
         right_layout.addWidget(self.ocr_button)
@@ -219,6 +246,11 @@ class MainWindow(QMainWindow):
         self.save_button.clicked.connect(self._on_save_clicked)
         self.ocr_button.clicked.connect(self._on_ocr_clicked)
 
+        # 警員資訊
+        self.officer_id_combo.activated.connect(self._on_officer_activated)
+        self.officer_id_combo.currentTextChanged.connect(self._on_officer_text_changed)
+        self.officer_name_edit.textChanged.connect(self._on_officer_text_changed)
+
         # 圖像增強滑桿連接
         self.brightness_slider.valueChanged.connect(self._on_enhancement_changed)
         self.contrast_slider.valueChanged.connect(self._on_enhancement_changed)
@@ -270,6 +302,61 @@ class MainWindow(QMainWindow):
         # 重啟防抖定時器
         self.enhancement_timer.stop()
         self.enhancement_timer.start()
+
+    def _load_p52_officers(self) -> list:
+        """從 config.json 讀取 p52_officers 清單"""
+        try:
+            config_path = get_config_dir() / "config.json"
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            return config.get("p52_officers", [])
+        except Exception:
+            return []
+
+    def _save_p52_officers(self) -> None:
+        """將更新後的 p52_officers 清單寫回 config.json"""
+        try:
+            config_path = get_config_dir() / "config.json"
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            config["p52_officers"] = self._p52_officers
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"寫入 config.json 失敗: {e}")
+
+    def _on_officer_activated(self, index: int):
+        """從下拉選單選取警員時，自動拆分填入姓名欄"""
+        text = self.officer_id_combo.itemText(index)
+        # 格式 0000XXX：前4碼為編號，後段為姓名
+        if len(text) > 4:
+            self.officer_name_edit.setText(text[4:])
+        else:
+            self.officer_name_edit.clear()
+
+    def _on_officer_text_changed(self):
+        """警員編號或姓名變更時即時更新畫布預覽"""
+        badge = self.officer_id_combo.currentText().strip()
+        self.canvas.set_officer_preview(badge)
+
+    def _get_officer_text(self) -> str:
+        """取得目前輸入的完整警員字串（用於輸出）"""
+        return self.officer_id_combo.currentText().strip()
+
+    def _prompt_save_new_officer(self, badge: str) -> None:
+        """若 badge 不在清單中，詢問是否加入常用選單"""
+        if not badge or badge in self._p52_officers:
+            return
+        reply = QMessageBox.question(
+            self,
+            "加入常用選單",
+            f"『{badge}』不在常用選單中，是否加入？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self._p52_officers.append(badge)
+            self.officer_id_combo.addItem(badge)
+            self._save_p52_officers()
 
     def _reset_enhancements(self):
         """
@@ -462,7 +549,10 @@ class MainWindow(QMainWindow):
         # 12. 取得當前增強參數
         enhancement_params = self.data_manager.get_enhancement_params(current_photo)
 
-        # 13. 生成合成照片 (帶增強參數)
+        # 13. 取得警員文字
+        officer_text = self._get_officer_text()
+
+        # 14. 生成合成照片 (帶增強參數與警員文字)
         success = self.image_processor.process_and_merge(
             current_photo,
             roi_for_processor,
@@ -470,20 +560,24 @@ class MainWindow(QMainWindow):
             subimage_position,
             output_path,
             enhancement_params,
+            officer_text or None,
         )
 
         if success:
-            # 14. 更新數據管理器
+            # 15. 更新數據管理器
             self.data_manager.mark_as_processed(current_photo, output_path)
 
-            # 15. 更新UI列表
+            # 16. 更新UI列表
             current_row = self.photo_list.currentRow()
             if current_row >= 0:
                 info = self.data_manager.get_photo_info(current_row)
                 if info:
                     self.photo_list.item(current_row).setText(f"✅ {info['filename']}")
 
-            # 16. 成功提示
+            # 17. 詢問是否將新警員加入常用選單
+            self._prompt_save_new_officer(officer_text)
+
+            # 18. 成功提示
             QMessageBox.information(
                 self,
                 "成功",

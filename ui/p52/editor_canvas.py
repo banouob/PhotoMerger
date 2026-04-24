@@ -8,9 +8,9 @@ QGraphicsView 畫布,處理:
 - 非同步圖像增強 (QThread Worker Pattern)
 """
 
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QMessageBox
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSimpleTextItem, QMessageBox
 from PyQt6.QtCore import Qt, QRectF, QPointF, QThread, QObject, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QPen, QColor, QPixmap, QImage
+from PyQt6.QtGui import QPen, QColor, QPixmap, QImage, QFont, QBrush
 from typing import Optional
 from ui.p52.graphics_items import ResizablePixmapItem
 from PIL import Image, ImageEnhance
@@ -201,6 +201,10 @@ class EditorCanvas(QGraphicsView):
         # 圖像增強
         self.original_pil_image = None  # 原始PIL圖像用於增強基準
 
+        # 警員資訊預覽
+        self._officer_text = ""
+        self.officer_preview_item = None
+
         # ============ 新增: 圖像增強執行緒 (QThread Worker Pattern) ============
 
         # Request ID 機制（防止串圖）
@@ -275,6 +279,7 @@ class EditorCanvas(QGraphicsView):
         self.scene.clear()
         self.current_photo_item = None
         self.current_subimage = None
+        self.officer_preview_item = None  # scene.clear() 已移除，重置參考
 
         # 加載照片
         pixmap = QPixmap(photo_path)
@@ -307,6 +312,9 @@ class EditorCanvas(QGraphicsView):
 
         # 適應視圖
         self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+
+        # 重新套用警員預覽文字（scene.clear() 已清除，需重建）
+        self._apply_officer_preview()
 
         # 計算最小縮放級別(當前 fit-to-view 的縮放級別)
         # ✅ 關鍵: 獲取 fitInView 後的實際縮放值
@@ -572,8 +580,38 @@ class EditorCanvas(QGraphicsView):
         self.scene.clear()
         self.current_photo_item = None
         self.current_subimage = None
+        self.officer_preview_item = None
         self.is_selecting = False
         self.selection_rect_item = None
+
+    def set_officer_preview(self, text: str):
+        """設定警員資訊預覽文字，即時更新畫布右上角顯示"""
+        self._officer_text = text
+        self._apply_officer_preview()
+
+    def _apply_officer_preview(self):
+        """在 Scene 右上角繪製警員文字預覽（黃色粗體標楷體）"""
+        if self.officer_preview_item:
+            self.scene.removeItem(self.officer_preview_item)
+            self.officer_preview_item = None
+
+        if not self._officer_text or not self.current_photo_item:
+            return
+
+        item = QGraphicsSimpleTextItem(self._officer_text)
+
+        font_size = max(30, int(self.SCENE_WIDTH * 0.035))
+        font = QFont("標楷體", font_size, QFont.Weight.Bold)
+        item.setFont(font)
+        item.setBrush(QBrush(QColor("#FFFF00")))
+        item.setZValue(20)
+
+        self.scene.addItem(item)
+        bw = item.boundingRect().width()
+        margin = int(self.SCENE_WIDTH * 0.01)
+        item.setPos(self.SCENE_WIDTH - bw - margin, margin)
+
+        self.officer_preview_item = item
 
     def apply_enhancements(self, brightness: int, contrast: int, saturation: int, sharpness: int):
         """
