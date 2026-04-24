@@ -600,7 +600,7 @@ class EditorCanvas(QGraphicsView):
 
         item = QGraphicsSimpleTextItem(self._officer_text)
 
-        font_size = max(30, int(self.SCENE_WIDTH * 0.035))
+        font_size = max(10, int(self.SCENE_WIDTH * 0.015))
         font = QFont("標楷體", font_size, QFont.Weight.Bold)
         item.setFont(font)
         item.setBrush(QBrush(QColor("#FFFF00")))

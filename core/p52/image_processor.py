@@ -159,7 +159,7 @@ class ImageProcessor:
     def _draw_officer_text(self, img: Image.Image, text: str) -> None:
         """在圖片右上角繪製警員文字（黑色描邊 + 黃色字）"""
         draw = ImageDraw.Draw(img)
-        font_size = max(40, int(img.width * 0.015))
+        font_size = max(10, int(img.width * 0.015))
 
         try:
             font = ImageFont.truetype(str(get_font_path()), size=font_size)
