@@ -139,21 +139,13 @@ class MainWindow(QMainWindow):
         officer_group = QGroupBox("人員資訊")
         officer_layout = QVBoxLayout(officer_group)
 
-        officer_id_label = QLabel("警員編號:")
         self.officer_id_combo = QComboBox()
         self.officer_id_combo.setEditable(True)
         self.officer_id_combo.setPlaceholderText("請選擇或輸入警員編號")
         self.officer_id_combo.addItems(self._p52_officers)
         self.officer_id_combo.setCurrentIndex(-1)
 
-        officer_name_label = QLabel("姓名:")
-        self.officer_name_edit = QLineEdit()
-        self.officer_name_edit.setPlaceholderText("自動填入或手動修改")
-
-        officer_layout.addWidget(officer_id_label)
         officer_layout.addWidget(self.officer_id_combo)
-        officer_layout.addWidget(officer_name_label)
-        officer_layout.addWidget(self.officer_name_edit)
 
         # 添加到右側佈局
         right_layout.addWidget(officer_group)
@@ -247,9 +239,7 @@ class MainWindow(QMainWindow):
         self.ocr_button.clicked.connect(self._on_ocr_clicked)
 
         # 警員資訊
-        self.officer_id_combo.activated.connect(self._on_officer_activated)
         self.officer_id_combo.currentTextChanged.connect(self._on_officer_text_changed)
-        self.officer_name_edit.textChanged.connect(self._on_officer_text_changed)
 
         # 圖像增強滑桿連接
         self.brightness_slider.valueChanged.connect(self._on_enhancement_changed)
@@ -324,15 +314,6 @@ class MainWindow(QMainWindow):
                 json.dump(config, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"寫入 config.json 失敗: {e}")
-
-    def _on_officer_activated(self, index: int):
-        """從下拉選單選取警員時，自動拆分填入姓名欄"""
-        text = self.officer_id_combo.itemText(index)
-        # 格式 0000XXX：前4碼為編號，後段為姓名
-        if len(text) > 4:
-            self.officer_name_edit.setText(text[4:])
-        else:
-            self.officer_name_edit.clear()
 
     def _on_officer_text_changed(self):
         """警員編號或姓名變更時即時更新畫布預覽"""
