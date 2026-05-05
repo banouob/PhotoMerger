@@ -13,8 +13,6 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 PROJECT_VERSION = "1.0"
-P52_PROJECT_FILENAME = ".photomerger_p52.json"
-GRID4_PROJECT_FILENAME = ".photomerger_4grid.json"
 
 
 def _serialize_image_state(state) -> dict:
@@ -165,16 +163,11 @@ def validate_paths(data: dict) -> list[str]:
     return missing
 
 
-def get_default_project_path(mode: str, working_dir: str) -> str:
-    """
-    取得預設專案檔路徑
+def get_p52_project_path(working_dir: str, ad_date: str) -> str:
+    """取得 P52 專案檔路徑（格式: {AD日期}超速.json）"""
+    return str(Path(working_dir) / f"{ad_date}超速.json")
 
-    Args:
-        mode: "p52" 或 "4grid"
-        working_dir: 工作目錄（P52 為目標照片目錄，4Grid 為掃描根目錄）
 
-    Returns:
-        完整檔案路徑
-    """
-    filename = P52_PROJECT_FILENAME if mode == "p52" else GRID4_PROJECT_FILENAME
-    return str(Path(working_dir) / filename)
+def get_4grid_project_path(working_dir: str, ad_date: str) -> str:
+    """取得 4Grid 專案檔路徑（格式: {AD日期}闖紅燈.json）"""
+    return str(Path(working_dir) / f"{ad_date}闖紅燈.json")

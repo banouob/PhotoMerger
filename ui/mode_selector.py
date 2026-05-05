@@ -127,7 +127,7 @@ class ModeSelector(QDialog):
         self.btn_resume.setFont(QFont("Microsoft YaHei UI", 11))
         self.btn_resume.setMinimumSize(200, 40)
         self.btn_resume.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_resume.setToolTip("載入先前儲存的專案檔 (.photomerger_*.json)")
+        self.btn_resume.setToolTip("載入先前儲存的專案檔 (*超速.json *闖紅燈.json)")
         self.btn_resume.setStyleSheet("""
             QPushButton {
                 background-color: #FF9800;
@@ -172,7 +172,7 @@ class ModeSelector(QDialog):
             self,
             "選擇專案檔",
             "",
-            "PhotoMerger 專案檔 (.photomerger_*.json);;所有檔案 (*)",
+            "PhotoMerger 專案檔 (*超速.json *闖紅燈.json);;所有檔案 (*)",
         )
 
         if filepath:

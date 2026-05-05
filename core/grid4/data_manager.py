@@ -248,6 +248,33 @@ class DataManager:
             # 無法讀取 EXIF（檔案損壞、無 EXIF 等）
             return None
 
+    def get_earliest_exif_date(self) -> str:
+        """
+        走訪所有案件的圖片 EXIF，回傳最早日期
+
+        Returns:
+            AD 日期字串 YYYYMMDD，若完全無 EXIF 則回傳今日日期
+        """
+        from datetime import datetime
+
+        earliest = None
+
+        for case in self.cases:
+            for img_path in case.image_paths:
+                exif_str = self._extract_exif_datetime(img_path)
+                if exif_str:
+                    try:
+                        dt = datetime.strptime(exif_str, "%Y:%m:%d %H:%M:%S")
+                        if earliest is None or dt < earliest:
+                            earliest = dt
+                    except ValueError:
+                        pass
+
+        if earliest is None:
+            earliest = datetime.now()
+
+        return earliest.strftime("%Y%m%d")
+
     def convert_to_roc_datetime(self, exif_datetime: str) -> str:
         """
         將 EXIF 時間轉換為民國年格式

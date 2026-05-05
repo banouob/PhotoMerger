@@ -586,11 +586,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """視窗關閉時自動儲存專案進度並清理資源"""
         try:
-            from core.project_manager import get_default_project_path, save_p52_project
+            from core.project_manager import get_p52_project_path, save_p52_project
 
             base_dir = self.data_manager.get_base_dir()
             if base_dir:
-                filepath = get_default_project_path("p52", base_dir)
+                filepath = get_p52_project_path(base_dir, self.data_manager.ad_date_str)
                 officer = self.officer_id_combo.currentText().strip()
                 save_p52_project(self.data_manager, officer, filepath)
         except Exception as e:

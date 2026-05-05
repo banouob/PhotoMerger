@@ -683,13 +683,11 @@ class MainWindow(QMainWindow):
 
         # 儲存專案進度
         try:
-            from core.project_manager import (
-                get_default_project_path,
-                save_4grid_project,
-            )
+            from core.project_manager import get_4grid_project_path, save_4grid_project
 
             if self.current_scan_root:
-                filepath = get_default_project_path("4grid", self.current_scan_root)
+                ad_date = self.data_manager.get_earliest_exif_date()
+                filepath = get_4grid_project_path(self.current_scan_root, ad_date)
                 save_4grid_project(self.data_manager, self.current_scan_root, filepath)
         except Exception:
             pass
