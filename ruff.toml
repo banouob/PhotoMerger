@@ -1,0 +1,22 @@
+# PhotoMerger ruff 設定
+# 執行檢查：ruff check .
+# 自動修正：ruff check --fix .
+
+target-version = "py312"
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "W",   # pycodestyle warnings
+    "UP",  # pyupgrade (modern Python syntax)
+]
+
+ignore = [
+    "E501", # line-too-long (交給 formatter 處理)
+]
+
+[lint.isort]
+# 將 PyQt6, Pillow, paddleocr 視為第三方
+known-first-party = ["core", "ui", "utils", "config"]

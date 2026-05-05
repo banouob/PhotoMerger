@@ -38,7 +38,7 @@ utils/
   validators.py             # 檔名清洗 + ROC/AD 日期格式驗證
   date_utils.py             # ROC ↔ AD 日期轉換
   paths.py                  # 字型路徑解析
-config/config.json           # 4Grid 執行期設定（承辦人、地點、尺寸、輸出品質）
+config/config.json           # 共用執行期設定（p52_officers 警員名單、4Grid 承辦人/地點/尺寸/輸出品質）
 ```
 
 ### 匯入慣例
@@ -65,10 +65,15 @@ config/config.json           # 4Grid 執行期設定（承辦人、地點、尺�
 - 每側場景尺寸：4096×3000；輸出：8192×3000 JPG（左側 = 警52照片，右側 = 目標照片）
 - ROC 日期格式：YYYMMDD（7 位數）；封存路徑依日期 + 速度類別組織
 
+### P52 警員文字疊加
+- 警員名單由 `config/config.json` 的 `p52_officers` 陣列定義（格式："姓名編號"）
+- 輸出時透過 `ImageProcessor` 將選定警員文字疊加至左側照片
+- 字體大小在預覽（EditorCanvas）與輸出（ImageProcessor）中需保持一致
+
 ## 重要限制
 
 - 新檔案必須放入對應模組（`core/`、`ui/`、`utils/`），禁止放置於根目錄
 - 擴充現有檔案，禁止建立 `*_v2.py` / `enhanced_*.py` 等重複實作
-- `config/config.json` 是 4Grid 設定的唯一來源，不得將這些值寫死於程式碼
+- `config/config.json` 是 P52 與 4Grid 共用設定的唯一來源，不得將這些值寫死於程式碼
 - 4Grid 所有座標使用正規化範圍（0.0–1.0），僅在渲染時才轉換為像素座標
 - 每完成一個任務後提交；推送至 `origin main` 以維持 GitHub 備份
