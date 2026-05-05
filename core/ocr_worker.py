@@ -7,9 +7,9 @@ OCR 辨識 Worker 模組
 
 import logging
 import re
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
+
 from PIL import Image
-from typing import Optional
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class OcrWorker(QObject):
         """初始化 Worker"""
         super().__init__()
 
-        self._image: Optional[Image.Image] = None
+        self._image: Image.Image | None = None
         self._ocr_engine = None  # 延遲初始化
 
     def set_image(self, pil_image: Image.Image):
@@ -64,7 +64,9 @@ class OcrWorker(QObject):
             # 停用 oneDNN (MKL-DNN)，修復 PaddlePaddle 3.x PIR executor 相容性問題
             # 錯誤: ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute]
             os.environ["FLAGS_use_mkldnn"] = "0"
-            from paddleocr import PaddleOCR  # noqa: E402 — 延遲 import，首次辨識時才載入
+            from paddleocr import (
+                PaddleOCR,  # noqa: E402 — 延遲 import，首次辨識時才載入
+            )
             self._ocr_engine = PaddleOCR(
                 use_angle_cls=True,
                 lang="ch",

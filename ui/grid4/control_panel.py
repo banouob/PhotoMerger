@@ -4,16 +4,24 @@
 顯示和編輯案件資訊
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QLineEdit, QPushButton, QGroupBox,
-    QDateTimeEdit, QFormLayout, QSlider
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QDateTime, QTimer
+from typing import Any
+
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
 
 from core.grid4.config_manager import get_config
-from typing import Dict, Any
 
 
 class ControlPanel(QWidget):
@@ -251,7 +259,7 @@ class ControlPanel(QWidget):
         self.slider_saturation.setValue(0)
         self.slider_sharpness.setValue(0)
 
-    def get_enhancement_values(self) -> Dict[str, int]:
+    def get_enhancement_values(self) -> dict[str, int]:
         """
         獲取影象增強引數
 
@@ -265,7 +273,7 @@ class ControlPanel(QWidget):
             "sharpness": self.slider_sharpness.value()
         }
 
-    def set_enhancement_values(self, values: Dict[str, int]):
+    def set_enhancement_values(self, values: dict[str, int]):
         """
         設定影象增強引數
 
@@ -360,7 +368,7 @@ class ControlPanel(QWidget):
 
         return group
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """
         獲取當前後設資料
 
@@ -374,7 +382,7 @@ class ControlPanel(QWidget):
             "datetime": self.edit_datetime.text().strip(),
         }
 
-    def set_metadata(self, metadata: Dict[str, Any]):
+    def set_metadata(self, metadata: dict[str, Any]):
         """
         設定後設資料
 
@@ -405,6 +413,7 @@ class ControlPanel(QWidget):
 
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication
 
     # 測試控制面板

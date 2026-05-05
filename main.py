@@ -6,8 +6,8 @@ PhotoMerger - 統一入口
 2. 4Grid 模式 (四格拼圖)
 """
 
-import sys
 import io
+import sys
 from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
@@ -27,11 +27,11 @@ def launch_p52_mode(app: QApplication):
     3. 選擇目標照片
     4. 啟動主視窗
     """
-    from utils.validators import validate_date_format
-    from utils.date_utils import roc_to_ad
     from core.p52.data_manager import DataManager
     from core.p52.image_processor import ImageProcessor
     from ui.p52.main_window import MainWindow
+    from utils.date_utils import roc_to_ad
+    from utils.validators import validate_date_format
 
     # 1. 輸入民國日期
     date_str, ok = QInputDialog.getText(

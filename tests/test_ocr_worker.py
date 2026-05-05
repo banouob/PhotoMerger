@@ -4,9 +4,11 @@
 測試 OcrWorker 的結果解析和車牌正規化，不依賴 PaddleOCR 引擎。
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
-from core.ocr_worker import OcrWorker, OcrManager
+
+from core.ocr_worker import OcrWorker
 
 
 class TestNormalizePlate:
@@ -75,7 +77,6 @@ class TestOcrResultParsing:
 
     def test_parse_v3_paddlex_format(self, worker):
         """PaddleOCR v3.x (PaddleX) 的 dict 格式應正確解析"""
-        import numpy as np
         from PIL import Image
 
         # 設定一張小測試圖片
@@ -99,7 +100,6 @@ class TestOcrResultParsing:
 
     def test_parse_v2_legacy_format(self, worker):
         """PaddleOCR v2.x 的 list 格式應正確解析"""
-        import numpy as np
         from PIL import Image
 
         worker._image = Image.new("RGB", (100, 50), color="white")

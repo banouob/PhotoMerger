@@ -6,9 +6,7 @@
 """
 
 import sys
-import os
 from pathlib import Path
-from typing import Optional
 
 
 def is_frozen() -> bool:
@@ -141,8 +139,8 @@ def print_path_diagnostics():
     - 資原始檔目錄
     """
     # 設定 UTF-8 編碼輸出（Windows 相容）
-    import sys
     import io
+    import sys
     if sys.stdout.encoding != 'utf-8':
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 

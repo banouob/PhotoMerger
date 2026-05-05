@@ -4,12 +4,13 @@
 使用 Pillow 處理圖像:縮放、裁剪、合併和保存
 """
 
+import logging
+import os
+
 from PIL import Image, ImageDraw, ImageFont
+
 from core.image_enhancement import apply_enhancements as _shared_apply_enhancements
 from utils.paths import get_font_path
-from typing import Tuple, Optional
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +69,12 @@ class ImageProcessor:
     def process_and_merge(
         self,
         target_photo_path: str,
-        roi: Tuple[int, int, int, int],
-        subimage_size: Tuple[int, int],
-        subimage_position: Tuple[int, int],
+        roi: tuple[int, int, int, int],
+        subimage_size: tuple[int, int],
+        subimage_position: tuple[int, int],
         output_path: str,
-        enhancement_params: Optional[dict] = None,
-        officer_text: Optional[str] = None,
+        enhancement_params: dict | None = None,
+        officer_text: str | None = None,
     ) -> bool:
         """
         處理目標照片並與警52照片合併
@@ -177,7 +178,7 @@ class ImageProcessor:
             draw.text((x + dx, y + dy), text, font=font, fill="#000000")
         draw.text((x, y), text, font=font, fill="#FFFF00")
 
-    def get_police_photo_size(self) -> Tuple[int, int]:
+    def get_police_photo_size(self) -> tuple[int, int]:
         """
         獲取警52照片的尺寸
 

@@ -4,11 +4,11 @@
 自定義 QGraphicsItem 子類用於箭頭
 """
 
-from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsTextItem, QGraphicsPixmapItem, QGraphicsItem
-from PyQt6.QtCore import Qt, QPointF, QLineF, QRectF
-from PyQt6.QtGui import QPen, QColor, QBrush, QFont, QPainterPath, QPolygonF, QPixmap, QPainter
 import math
-from typing import Optional
+
+from PyQt6.QtCore import QLineF, QPointF, QRectF, Qt
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPen, QPixmap, QPolygonF
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsLineItem, QGraphicsPixmapItem
 
 
 class ResizablePixmapItem(QGraphicsPixmapItem):
@@ -30,7 +30,7 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
     HANDLE_BOTTOM_LEFT = 2
     HANDLE_BOTTOM_RIGHT = 3
 
-    def __init__(self, pixmap: QPixmap, parent: Optional[QGraphicsItem] = None):
+    def __init__(self, pixmap: QPixmap, parent: QGraphicsItem | None = None):
         super().__init__(pixmap, parent)
 
         # 設定標誌
@@ -86,7 +86,7 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
             )
             painter.drawRect(handle_rect)
 
-    def _get_handle_at_pos(self, pos: QPointF) -> Optional[int]:
+    def _get_handle_at_pos(self, pos: QPointF) -> int | None:
         rect = self.boundingRect()
         hit_size = self.HIT_TEST_SIZE
         corners = [
@@ -190,9 +190,11 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
             return
 
         # Simple bounds check (clamping)
-        if new_x < self.scene_bounds.left(): new_x = self.scene_bounds.left()
-        if new_y < self.scene_bounds.top(): new_y = self.scene_bounds.top()
-        
+        if new_x < self.scene_bounds.left():
+            new_x = self.scene_bounds.left()
+        if new_y < self.scene_bounds.top():
+            new_y = self.scene_bounds.top()
+
         # Apply strict aspect ratio scaling
         scaled_pixmap = self.resize_start_pixmap.scaled(
             int(new_width), int(new_height),
@@ -207,7 +209,7 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
             new_pos = value
             rect = self.boundingRect()
             item_rect = QRectF(new_pos.x(), new_pos.y(), rect.width(), rect.height())
-            
+
             if not self.scene_bounds.contains(item_rect):
                 # Clamp position
                 x = max(self.scene_bounds.left(), min(new_pos.x(), self.scene_bounds.right() - rect.width()))
@@ -320,7 +322,8 @@ class ArrowItem(QGraphicsLineItem):
 
 if __name__ == "__main__":
     import sys
-    from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene
+
+    from PyQt6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView
 
     # 測試箭頭和標註點
     app = QApplication(sys.argv)

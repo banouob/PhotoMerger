@@ -7,10 +7,10 @@
 - 所見即所得樣式
 """
 
-from PyQt6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem
-from PyQt6.QtCore import Qt, QRectF, QPointF
-from PyQt6.QtGui import QPen, QColor, QPainter, QPixmap
-from typing import Optional
+
+from PyQt6.QtCore import QPointF, QRectF, Qt
+from PyQt6.QtGui import QColor, QPainter, QPen, QPixmap
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsPixmapItem
 
 
 class ResizablePixmapItem(QGraphicsPixmapItem):
@@ -34,7 +34,7 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
     HANDLE_BOTTOM_LEFT = 2
     HANDLE_BOTTOM_RIGHT = 3
 
-    def __init__(self, pixmap: QPixmap, parent: Optional[QGraphicsItem] = None):
+    def __init__(self, pixmap: QPixmap, parent: QGraphicsItem | None = None):
         """
         初始化可縮放圖片元件
 
@@ -149,7 +149,7 @@ class ResizablePixmapItem(QGraphicsPixmapItem):
             )
             painter.drawRect(handle_rect)
 
-    def _get_handle_at_pos(self, pos: QPointF) -> Optional[int]:
+    def _get_handle_at_pos(self, pos: QPointF) -> int | None:
         """
         獲取位置處的拖拽手柄（使用更大的擊中區域）
 

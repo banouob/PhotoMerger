@@ -4,10 +4,10 @@
 實現撤銷/重做功能
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Tuple
-from copy import deepcopy
 import logging
+from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,8 @@ class EditSnapshot:
     - 支援深複製
     """
 
-    arrows: List[Tuple[float, float, float, float]] = field(default_factory=list)
-    sub_image: Optional[Dict[str, Any]] = None  # 子圖資料
+    arrows: list[tuple[float, float, float, float]] = field(default_factory=list)
+    sub_image: dict[str, Any] | None = None  # 子圖資料
     brightness: int = 0
     contrast: int = 0
     saturation: int = 0
@@ -64,8 +64,8 @@ class EditHistory:
             max_history: 最大歷史記錄數
         """
         self.max_history = max_history
-        self.undo_stack: List[EditSnapshot] = []
-        self.redo_stack: List[EditSnapshot] = []
+        self.undo_stack: list[EditSnapshot] = []
+        self.redo_stack: list[EditSnapshot] = []
 
     def push(self, snapshot: EditSnapshot):
         """
@@ -84,7 +84,7 @@ class EditHistory:
         # 清空重做棧（新操作會使重做失效）
         self.redo_stack.clear()
 
-    def undo(self) -> Optional[EditSnapshot]:
+    def undo(self) -> EditSnapshot | None:
         """
         撤銷操作
 
@@ -105,7 +105,7 @@ class EditHistory:
             # 撤銷到初始狀態
             return EditSnapshot()
 
-    def redo(self) -> Optional[EditSnapshot]:
+    def redo(self) -> EditSnapshot | None:
         """
         重做操作
 

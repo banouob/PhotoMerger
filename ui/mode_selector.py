@@ -4,12 +4,9 @@
 提供 P52 和 4Grid 模式選擇介面
 """
 
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel
-)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 
 class ModeSelector(QDialog):

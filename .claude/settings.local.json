@@ -6,7 +6,11 @@
       "PowerShell(ruff check *)",
       "Skill(update-config)",
       "PowerShell($json = Get-Content \".claude/settings.json\" -Raw | ConvertFrom-Json; $hooks = $json.hooks.Stop; foreach \\($entry in $hooks\\) { foreach \\($h in $entry.hooks\\) { if \\($h.type -eq \"command\"\\) { Write-Output \"VALIDATED: $\\($h.command\\)\" } } })",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(ruff check *)",
+      "Bash(python *)"
     ]
   }
 }

@@ -2,17 +2,18 @@
 测试 core.data_manager 模块
 """
 
-import pytest
 import tempfile
-import shutil
 from pathlib import Path
+
+import pytest
 from PIL import Image
+
 from core.grid4.data_manager import (
-    DataManager,
     CaseData,
-    ImageState,
     CaseStatus,
-    get_data_manager
+    DataManager,
+    ImageState,
+    get_data_manager,
 )
 
 

@@ -9,31 +9,33 @@ PhotoMerger_P52 的主用戶介面
 - 右側: 車牌輸入和保存按鈕
 """
 
+import json
+import os
+
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QListWidget,
-    QPushButton,
-    QLineEdit,
-    QLabel,
-    QMessageBox,
-    QListWidgetItem,
-    QGroupBox,
-    QSlider,
     QCheckBox,
     QComboBox,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QTimer
-from ui.p52.editor_canvas import EditorCanvas
+
+from core.ocr_worker import OcrManager
 from core.p52.data_manager import DataManager
 from core.p52.image_processor import ImageProcessor
-from core.ocr_worker import OcrManager
-from utils.validators import sanitize_filename
+from ui.p52.editor_canvas import EditorCanvas
 from utils.paths import get_config_dir
-import os
-import json
+from utils.validators import sanitize_filename
 
 
 class MainWindow(QMainWindow):
@@ -297,7 +299,7 @@ class MainWindow(QMainWindow):
         """從 config.json 讀取 p52_officers 清單"""
         try:
             config_path = get_config_dir() / "config.json"
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             return config.get("p52_officers", [])
         except Exception:
@@ -307,7 +309,7 @@ class MainWindow(QMainWindow):
         """將更新後的 p52_officers 清單寫回 config.json"""
         try:
             config_path = get_config_dir() / "config.json"
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             config["p52_officers"] = self._p52_officers
             with open(config_path, "w", encoding="utf-8") as f:

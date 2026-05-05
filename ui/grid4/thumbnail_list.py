@@ -4,15 +4,19 @@
 支援拖曳排序的圖片縮圖列表
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QFrame,
-    QSizePolicy, QApplication
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QByteArray, QPoint
-from PyQt6.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QFont, QDrag
-from PIL import Image
 from pathlib import Path
-from typing import List, Optional
+
+from PIL import Image
+from PyQt6.QtCore import QByteArray, QMimeData, QPoint, Qt, pyqtSignal
+from PyQt6.QtGui import QDrag, QFont, QImage, QPixmap
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFrame,
+    QLabel,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class ThumbnailItem(QFrame):
@@ -101,7 +105,7 @@ class ThumbnailItem(QFrame):
 
             self.label_thumbnail.setPixmap(pixmap)
 
-        except Exception as e:
+        except Exception:
             # 載入失敗，顯示錯誤資訊
             self.label_thumbnail.setText(f"載入失敗\n{Path(self.image_path).name}")
             self.label_thumbnail.setStyleSheet("color: red;")
@@ -198,7 +202,7 @@ class ThumbnailList(QWidget):
         """初始化縮圖列表"""
         super().__init__(parent)
 
-        self.thumbnails: List[ThumbnailItem] = []
+        self.thumbnails: list[ThumbnailItem] = []
         self.current_index = -1
 
         # 啟用拖曳接受
@@ -231,7 +235,7 @@ class ThumbnailList(QWidget):
         self.hint_label.setStyleSheet("color: #999; font-size: 12px;")
         layout.addWidget(self.hint_label)
 
-    def load_images(self, image_paths: List[str]):
+    def load_images(self, image_paths: list[str]):
         """
         載入圖片列表
 
@@ -366,6 +370,7 @@ class ThumbnailList(QWidget):
 
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication
 
     # 測試縮圖列表

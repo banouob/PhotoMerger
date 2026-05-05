@@ -4,18 +4,31 @@
 顯示和編輯當前圖片 (QGraphicsView 架構)
 """
 
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsTextItem
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import QPixmap, QImage, QPainter, QColor, QFont, QBrush, QCursor, QPen, QPolygonF, QWheelEvent
-from PIL import Image, ImageEnhance
-from pathlib import Path
-from typing import Optional, Tuple, List
 from enum import Enum
+from pathlib import Path
 
-from ui.grid4.edit_items import ArrowItem, ResizablePixmapItem
-from core.image_enhancement import ImageEnhancementManager
+from PIL import Image, ImageEnhance
+from PyQt6.QtCore import QPointF, QRectF, Qt, pyqtSignal
+from PyQt6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QImage,
+    QPainter,
+    QPen,
+    QPixmap,
+)
+from PyQt6.QtWidgets import (
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+)
+
 from core.grid4.config_manager import get_config
 from core.grid4.edit_history import EditHistory, EditSnapshot
+from core.image_enhancement import ImageEnhancementManager
+from ui.grid4.edit_items import ArrowItem, ResizablePixmapItem
 
 
 class EditMode(Enum):
@@ -51,13 +64,13 @@ class CanvasView(QGraphicsView):
         self.setScene(self.scene)
 
         # 圖片項
-        self.image_item: Optional[QGraphicsPixmapItem] = None
-        self.current_image_path: Optional[str] = None
-        self.current_pil_image: Optional[Image.Image] = None  # 儲存原始 PIL 圖片
+        self.image_item: QGraphicsPixmapItem | None = None
+        self.current_image_path: str | None = None
+        self.current_pil_image: Image.Image | None = None  # 儲存原始 PIL 圖片
         self.current_image_index: int = -1  # 當前圖片索引（用於狀態持久化）
 
         # 佔位符文字項
-        self.placeholder_text: Optional[QGraphicsTextItem] = None
+        self.placeholder_text: QGraphicsTextItem | None = None
 
         # 縮放/平移狀態
         self.zoom_factor = 1.0
@@ -70,14 +83,14 @@ class CanvasView(QGraphicsView):
         self.config = get_config()
 
         # 箭頭列表
-        self.arrows: List[ArrowItem] = []
-        self.temp_arrow_item: Optional[ArrowItem] = None
-        self.arrow_start_pos: Optional[QPointF] = None
+        self.arrows: list[ArrowItem] = []
+        self.temp_arrow_item: ArrowItem | None = None
+        self.arrow_start_pos: QPointF | None = None
 
         # 子圖/框選
-        self.current_subimage: Optional[ResizablePixmapItem] = None
+        self.current_subimage: ResizablePixmapItem | None = None
         self.is_selecting = False
-        self.selection_start: Optional[QPointF] = None
+        self.selection_start: QPointF | None = None
         self.selection_rect_item = None
 
         # 影象增強管理器
@@ -121,17 +134,17 @@ class CanvasView(QGraphicsView):
         高解析度圖片會自動放大箭頭
         """
         base_width = self.config.get("default_arrow_width", 15)
-        
+
         if not self.image_item or not self.image_item.pixmap():
             return base_width
-            
+
         # 圖片寬度
         img_width = self.image_item.pixmap().width()
         base_resolution = 1200  # 基準解析度
-        
+
         # 縮放因子 (至少 1.0)
         scale_factor = max(1.0, img_width / base_resolution)
-        
+
         return int(base_width * scale_factor)
 
     def _show_placeholder(self, text: str, color: str = "#999"):
@@ -258,21 +271,21 @@ class CanvasView(QGraphicsView):
 
             # 儲存子圖
             if self.current_subimage and self.current_pil_image:
-                 src = self.current_subimage.source_roi 
-                 
+                 src = self.current_subimage.source_roi
+
                  # 計算 Target (Scene Rect -> Normalized Image Coords)
                  scene_rect = self.current_subimage.sceneBoundingRect()
-                 
+
                  # Scene -> Pixmap Coords
                  item_polygon = self.image_item.mapFromScene(scene_rect)
-                 item_rect = item_polygon.boundingRect() 
-                 
+                 item_rect = item_polygon.boundingRect()
+
                  w, h = self.current_pil_image.size
                  t_x = item_rect.x() / w
                  t_y = item_rect.y() / h
                  t_w = item_rect.width() / w
                  t_h = item_rect.height() / h
-                 
+
                  image_state.sub_image = {
                      "source": [src.x(), src.y(), src.width(), src.height()],
                      "target": [t_x, t_y, t_w, t_h]
@@ -303,7 +316,7 @@ class CanvasView(QGraphicsView):
             if self.current_subimage:
                 self.scene.removeItem(self.current_subimage)
                 self.current_subimage = None
-                
+
             if image_state.sub_image and self.current_pil_image:
                  self._restore_subimage_from_data(image_state.sub_image)
 
@@ -398,8 +411,10 @@ class CanvasView(QGraphicsView):
 
         sx = max(0, sx)
         sy = max(0, sy)
-        if sx + sw > w: sw = w - sx
-        if sy + sh > h: sh = h - sy
+        if sx + sw > w:
+            sw = w - sx
+        if sy + sh > h:
+            sh = h - sy
         if sw <= 0 or sh <= 0:
             return
 
@@ -422,7 +437,7 @@ class CanvasView(QGraphicsView):
 
         self.current_subimage.setPixmap(pixmap)
 
-    def get_subimage_pil(self) -> Optional[Image.Image]:
+    def get_subimage_pil(self) -> Image.Image | None:
         """
         取得當前子圖的原始裁切 PIL Image（用於 OCR）
 
@@ -548,12 +563,12 @@ class CanvasView(QGraphicsView):
         # 儲存子圖
         sub_image_data = None
         if self.current_subimage and self.current_pil_image:
-             src = self.current_subimage.source_roi 
+             src = self.current_subimage.source_roi
              scene_rect = self.current_subimage.sceneBoundingRect()
              item_polygon = self.image_item.mapFromScene(scene_rect)
              item_rect = item_polygon.boundingRect()
              w, h = self.current_pil_image.size
-             
+
              sub_image_data = {
                  "source": [src.x(), src.y(), src.width(), src.height()],
                  "target": [item_rect.x()/w, item_rect.y()/h, item_rect.width()/w, item_rect.height()/h]
@@ -597,7 +612,7 @@ class CanvasView(QGraphicsView):
         if self.current_subimage:
             self.scene.removeItem(self.current_subimage)
             self.current_subimage = None
-            
+
         if snapshot.sub_image and self.current_pil_image:
              self._restore_subimage_from_data(snapshot.sub_image)
 
@@ -723,7 +738,7 @@ class CanvasView(QGraphicsView):
                 # 建立臨時選擇框
                 if self.selection_rect_item:
                     self.scene.removeItem(self.selection_rect_item)
-                
+
                 pen = QPen(QColor(0, 120, 215), 2, Qt.PenStyle.DashLine)
                 pen.setCosmetic(True)
                 self.selection_rect_item = self.scene.addRect(
@@ -862,8 +877,10 @@ class CanvasView(QGraphicsView):
         # 邊界檢查
         ix = max(0, ix)
         iy = max(0, iy)
-        if ix + iw > w: iw = w - ix
-        if iy + ih > h: ih = h - iy
+        if ix + iw > w:
+            iw = w - ix
+        if iy + ih > h:
+            ih = h - iy
 
         if iw <= 0 or ih <= 0:
             return
@@ -921,11 +938,14 @@ class CanvasView(QGraphicsView):
         sh = int(src[3] * h)
 
         # 邊界檢查
-        if sw <= 0 or sh <= 0: return
+        if sw <= 0 or sh <= 0:
+            return
         sx = max(0, sx)
         sy = max(0, sy)
-        if sx + sw > w: sw = w - sx
-        if sy + sh > h: sh = h - sy
+        if sx + sw > w:
+            sw = w - sx
+        if sy + sh > h:
+            sh = h - sy
 
         cropped_pil = self.current_pil_image.crop((sx, sy, sx + sw, sy + sh))
 
@@ -1009,33 +1029,34 @@ class CanvasView(QGraphicsView):
             self.scene.addItem(arrow)
             self.arrows.append(arrow)
 
-    def scene_to_relative(self, x: float, y: float) -> Tuple[float, float]:
+    def scene_to_relative(self, x: float, y: float) -> tuple[float, float]:
         """
         Scene 座標 → 相對座標 (0.0~1.0)
-        
+
         修正: 基於 Image Item 座標系，而非整個 Scene
         """
         if not self.image_item:
             return (0.0, 0.0)
-            
+
         # Scene Point -> Image Item Local Point
         local_pt = self.image_item.mapFromScene(QPointF(x, y))
-        
+
         pixmap = self.image_item.pixmap()
         if not pixmap or pixmap.isNull():
             return (0.0, 0.0)
-            
+
         w = pixmap.width()
         h = pixmap.height()
-        
-        if w == 0 or h == 0: return (0.0, 0.0)
-        
+
+        if w == 0 or h == 0:
+            return (0.0, 0.0)
+
         return (local_pt.x() / w, local_pt.y() / h)
 
-    def relative_to_scene(self, rel_x: float, rel_y: float) -> Tuple[float, float]:
+    def relative_to_scene(self, rel_x: float, rel_y: float) -> tuple[float, float]:
         """
         相對座標 (0.0~1.0) → Scene 座標
-        
+
         修正: 基於 Image Item 座標系還原
         """
         if not self.image_item:
@@ -1047,14 +1068,14 @@ class CanvasView(QGraphicsView):
 
         w = pixmap.width()
         h = pixmap.height()
-        
+
         # Relative -> Local Point
         local_x = rel_x * w
         local_y = rel_y * h
-        
+
         # Local Point -> Scene Point
         scene_pt = self.image_item.mapToScene(QPointF(local_x, local_y))
-        
+
         return (scene_pt.x(), scene_pt.y())
 
     def resizeEvent(self, event):
@@ -1073,6 +1094,7 @@ class CanvasView(QGraphicsView):
 
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication
 
     # 測試畫布檢視

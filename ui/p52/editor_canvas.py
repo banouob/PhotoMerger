@@ -8,13 +8,19 @@ QGraphicsView 畫布,處理:
 - 非同步圖像增強 (QThread Worker Pattern)
 """
 
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSimpleTextItem, QMessageBox
-from PyQt6.QtCore import Qt, QRectF, QPointF, QThread, QObject, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QPen, QColor, QPixmap, QImage, QFont, QBrush
-from typing import Optional
-from ui.p52.graphics_items import ResizablePixmapItem
+
 from PIL import Image, ImageEnhance
 from PIL.ImageQt import ImageQt
+from PyQt6.QtCore import QObject, QRectF, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPen, QPixmap
+from PyQt6.QtWidgets import (
+    QGraphicsScene,
+    QGraphicsSimpleTextItem,
+    QGraphicsView,
+    QMessageBox,
+)
+
+from ui.p52.graphics_items import ResizablePixmapItem
 
 
 class ImageEnhancementWorker(QObject):
@@ -489,7 +495,7 @@ class EditorCanvas(QGraphicsView):
 
         self.scene.addItem(self.current_subimage)
 
-    def get_current_roi(self) -> Optional[tuple]:
+    def get_current_roi(self) -> tuple | None:
         """
         獲取當前 ROI (Region of Interest)
 
@@ -505,7 +511,7 @@ class EditorCanvas(QGraphicsView):
             return (rect.x(), rect.y(), rect.width(), rect.height())
         return None
 
-    def get_subimage_info(self) -> Optional[dict]:
+    def get_subimage_info(self) -> dict | None:
         """
         獲取子图的完整信息
 
@@ -535,7 +541,7 @@ class EditorCanvas(QGraphicsView):
             "source_roi_rect": source_roi,
         }
 
-    def get_subimage_pil(self) -> Optional[Image.Image]:
+    def get_subimage_pil(self) -> Image.Image | None:
         """
         取得當前子圖的原始裁切 PIL Image（用於 OCR）
 

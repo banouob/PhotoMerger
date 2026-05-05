@@ -7,7 +7,7 @@ scripts/download_ocr_models.py
       將模型快取目錄複製到目標機器的相同路徑。
 
 模型快取位置：
-  Windows: %USERPROFILE%\.paddleocr\
+  Windows: %USERPROFILE%\\.paddleocr\
   Linux/macOS: ~/.paddleocr/
 
 使用方式：

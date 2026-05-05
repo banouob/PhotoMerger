@@ -4,22 +4,31 @@
 PhotoMerger_4Grid 的主介面
 """
 
-from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QComboBox, QPushButton, QStatusBar,
-    QFileDialog, QMessageBox, QSplitter
-)
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
 from pathlib import Path
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QStatusBar,
+    QVBoxLayout,
+    QWidget,
+)
 
 from core.grid4.config_manager import get_config
 from core.grid4.data_manager import get_data_manager
 from core.ocr_worker import OcrManager
-from ui.grid4.thumbnail_list import ThumbnailList
 from ui.grid4.canvas_view import CanvasView
 from ui.grid4.control_panel import ControlPanel
 from ui.grid4.edit_toolbar import EditToolbar
+from ui.grid4.thumbnail_list import ThumbnailList
 
 
 class MainWindow(QMainWindow):
@@ -296,7 +305,7 @@ class MainWindow(QMainWindow):
                     # 因為我們在上面已經存過舊狀態了，且此時畫面上還殘留著舊圖的內容，
                     # 這裡必須禁止 load_image 再次觸發儲存，否則會把舊內容寫入新案件。
                     self.canvas_view.load_image(current_case.image_paths[0], save_state=False)
-                    
+
                     # 讀取第一張圖片的 EXIF 時間並設定到控制面板
                     exif_time = self.data_manager._extract_exif_datetime(current_case.image_paths[0])
                     if exif_time:
@@ -407,7 +416,7 @@ class MainWindow(QMainWindow):
         # 選擇輸出目錄
         from core.grid4.archive_manager import get_archive_manager
         archive_manager = get_archive_manager()
-        
+
         default_output = archive_manager.get_suggested_output_root()
         output_root = QFileDialog.getExistingDirectory(
             self,
@@ -421,7 +430,7 @@ class MainWindow(QMainWindow):
 
         try:
             self.statusbar.showMessage("正在輸出...")
-            
+
             # 執行歸檔
             output_path = archive_manager.archive_case(current_case, output_root)
 
@@ -484,9 +493,9 @@ class MainWindow(QMainWindow):
                 # 使用 self.current_scan_root 作為輸出根目錄
                 # 這樣所有案件都會輸出到 Root 底下的同一個資料夾中
                 archive_manager.archive_case(case, self.current_scan_root)
-                
+
                 # 案件原本就是 done，這裡可以省略 mark_case_as_done
-                
+
                 success_count += 1
             except Exception as e:
                 print(f"Failed to export case {case.folder_path}: {e}")
@@ -640,6 +649,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)

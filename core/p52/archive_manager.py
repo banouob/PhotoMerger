@@ -5,11 +5,10 @@
 實現文件夾結構管理、警52照片複製、原檔歸檔等功能
 """
 
+import glob
+import logging
 import os
 import shutil
-import glob
-from typing import Dict, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class ArchiveManager:
         self._police_copied = False  # 跟蹤警52照片是否已複製
         self._folder_structure = self._build_folder_paths()
 
-    def _build_folder_paths(self) -> Dict[str, str]:
+    def _build_folder_paths(self) -> dict[str, str]:
         """
         構建所有文件夾路徑
 

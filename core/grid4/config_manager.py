@@ -5,17 +5,17 @@
 提供配置項的統一訪問介面
 """
 
-import json
-import os
-import subprocess
-import platform
-import time
-import shutil
 import copy
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from utils.paths import get_config_dir
+import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
+import time
+from typing import Any
+
+from utils.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +61,12 @@ class ConfigManager:
         """初始化配置管理器"""
         self.config_dir = get_config_dir()
         self.config_path = self.config_dir / self.CONFIG_FILENAME
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
 
         # 載入配置（首次執行會自動生成）
         self.load_config()
 
-    def load_config(self) -> Dict[str, Any]:
+    def load_config(self) -> dict[str, Any]:
         """
         載入配置檔案
 
@@ -85,7 +85,7 @@ class ConfigManager:
 
         try:
             # 讀取配置檔案
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, encoding='utf-8') as f:
                 loaded_config = json.load(f)
 
             # 驗證配置完整性（合併預設值）
@@ -94,7 +94,7 @@ class ConfigManager:
             logger.info(f"Config loaded successfully: {self.config_path}")
             return self.config
 
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             # 配置檔案損壞,備份後重置
             logger.info(f"Config file corrupted: {e}")
             self._backup_corrupted_config()
@@ -103,7 +103,7 @@ class ConfigManager:
             self.save_config()
             return self.config
 
-    def save_config(self, data: Optional[Dict[str, Any]] = None):
+    def save_config(self, data: dict[str, Any] | None = None):
         """
         儲存配置到檔案
 
@@ -124,7 +124,7 @@ class ConfigManager:
                 )
             logger.info(f"Config saved successfully: {self.config_path}")
 
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Failed to save config: {e}")
             raise
 
@@ -165,7 +165,7 @@ class ConfigManager:
         self.config[key] = value
         self.save_config()
 
-    def get_officers(self) -> List[str]:
+    def get_officers(self) -> list[str]:
         """
         獲取承辦人列表（快捷方法）
 
@@ -186,7 +186,7 @@ class ConfigManager:
             officers.append(name)
             self.set("officers", officers)
 
-    def get_locations(self) -> List[str]:
+    def get_locations(self) -> list[str]:
         """
         獲取地點列表（快捷方法）
 
@@ -207,7 +207,7 @@ class ConfigManager:
             locations.append(location)
             self.set("locations", locations)
 
-    def get_canvas_size(self) -> Tuple[int, int]:
+    def get_canvas_size(self) -> tuple[int, int]:
         """
         獲取畫布尺寸（快捷方法）
 
@@ -217,7 +217,7 @@ class ConfigManager:
         size = self.get("canvas_size", [2400, 1600])
         return (size[0], size[1])
 
-    def get_info_card_size(self) -> Tuple[int, int]:
+    def get_info_card_size(self) -> tuple[int, int]:
         """
         獲取資訊卡尺寸（快捷方法）
 
@@ -262,7 +262,7 @@ class ConfigManager:
             logger.error(f"Failed to open config file: {e}")
             raise
 
-    def _merge_with_defaults(self, loaded_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_with_defaults(self, loaded_config: dict[str, Any]) -> dict[str, Any]:
         """
         合併載入的配置與預設配置
 
@@ -298,7 +298,7 @@ class ConfigManager:
 # === 快捷訪問介面 ===
 
 # 全域性配置管理器例項（單例模式）
-_config_manager: Optional[ConfigManager] = None
+_config_manager: ConfigManager | None = None
 
 
 def get_config() -> ConfigManager:

@@ -4,12 +4,16 @@
 提供編輯模式切換和操作按鈕
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QButtonGroup,
-    QLabel, QFrame
-)
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QWidget,
+)
 
 
 class EditToolbar(QWidget):
@@ -210,7 +214,8 @@ class EditToolbar(QWidget):
 
 if __name__ == "__main__":
     import sys
-    from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QTextEdit
+
+    from PyQt6.QtWidgets import QApplication, QTextEdit, QVBoxLayout, QWidget
 
     # 測試編輯工具欄
     app = QApplication(sys.argv)

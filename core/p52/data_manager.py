@@ -5,12 +5,10 @@
 實現"潔癖模式":智能管理每張原始照片生成的輸出文件
 """
 
-import os
-import glob
-from typing import Dict, List, Optional, Tuple
-from pathlib import Path
-from core.p52.archive_manager import ArchiveManager
 import logging
+import os
+
+from core.p52.archive_manager import ArchiveManager
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +25,7 @@ class DataManager:
     """
 
     def __init__(
-        self, police_photo_path: str, target_photo_paths: List[str], roc_date_str: str, ad_date_str: str
+        self, police_photo_path: str, target_photo_paths: list[str], roc_date_str: str, ad_date_str: str
     ):
         """
         初始化數據管理器
@@ -53,16 +51,16 @@ class DataManager:
         )
 
         # 照片處理狀態: {照片路徑: True/False}
-        self.processing_status: Dict[str, bool] = {
+        self.processing_status: dict[str, bool] = {
             path: False for path in target_photo_paths
         }
 
         # 輸出歷史記錄 (潔癖模式): {原始照片路徑: 生成的輸出文件路徑}
         # 用於跟蹤每張原始照片最近生成的輸出文件
-        self.output_history: Dict[str, str] = {}
+        self.output_history: dict[str, str] = {}
 
         # 圖像增強參數: {照片路徑: {brightness, contrast, saturation, sharpness}}
-        self.enhancement_params: Dict[str, dict] = {
+        self.enhancement_params: dict[str, dict] = {
             path: {"brightness": 0, "contrast": 0, "saturation": 0, "sharpness": 0}
             for path in target_photo_paths
         }
@@ -70,7 +68,7 @@ class DataManager:
         # 當前選中的照片索引
         self.current_index = 0 if target_photo_paths else -1
 
-    def get_current_photo(self) -> Optional[str]:
+    def get_current_photo(self) -> str | None:
         """
         獲取當前選中的照片路徑
 
@@ -122,7 +120,7 @@ class DataManager:
 
     def check_conflict(
         self, photo_path: str, proposed_filename: str
-    ) -> Tuple[bool, bool, Optional[str]]:
+    ) -> tuple[bool, bool, str | None]:
         """
         檢查檔名衝突 (潔癖模式核心邏輯)
 
@@ -200,7 +198,7 @@ class DataManager:
         """
         return sum(1 for status in self.processing_status.values() if status)
 
-    def get_photo_info(self, index: int) -> Optional[Dict[str, any]]:
+    def get_photo_info(self, index: int) -> dict[str, any] | None:
         """
         獲取照片信息
 
@@ -233,7 +231,7 @@ class DataManager:
 
     def check_cross_category_conflict(
         self, plate: str, is_severe: bool
-    ) -> Tuple[bool, str, str]:
+    ) -> tuple[bool, str, str]:
         """
         檢查車牌是否存在於相反類別
 
@@ -247,8 +245,7 @@ class DataManager:
             - (True, "一般", path): 存在於一般超速
             - (True, "嚴重", path): 存在於嚴重超速
         """
-        # 確定當前和相反類別
-        current_category = "嚴重" if is_severe else "一般"
+        # 確定相反類別
         opposite_category = "一般" if is_severe else "嚴重"
 
         # 檢查相反類別的合成照片是否存在

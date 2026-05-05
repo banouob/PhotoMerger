@@ -7,10 +7,10 @@
 3. ImageEnhancementManager - 管理 Worker 生命週期
 """
 
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
-from PyQt6.QtGui import QImage
+
 from PIL import Image, ImageEnhance
-from typing import Optional
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QImage
 
 
 def apply_enhancements(img: Image.Image, brightness: int = 0,
@@ -79,7 +79,7 @@ class ImageEnhancementWorker(QObject):
         """初始化 Worker"""
         super().__init__()
 
-        self.original_pil_image: Optional[Image.Image] = None
+        self.original_pil_image: Image.Image | None = None
         self.current_request_id = 0
 
     def set_original_image(self, pil_image: Image.Image):

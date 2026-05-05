@@ -5,7 +5,6 @@ ROC (Republic of China/Taiwan) 日期轉換工具
 民國年 = 西元年 - 1911
 """
 
-from typing import Optional
 
 
 def roc_to_ad(roc_date_str: str) -> str:

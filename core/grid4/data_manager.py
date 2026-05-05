@@ -4,14 +4,14 @@
 負責批次案件管理、圖片排序、編輯狀態追蹤
 """
 
+import logging
 import os
-from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Dict, Any, Tuple
+from pathlib import Path
+from typing import Any
+
 from PIL import Image
-from PIL.ExifTags import TAGS
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ class ImageState:
 
     包含箭頭、標註點、影象調整引數等
     """
-    arrows: List[Tuple[float, float, float, float]] = field(default_factory=list)
-    sub_image: Optional[Dict[str, Any]] = None  # {"source": [x,y,w,h], "target": [x,y,w,h]}
+    arrows: list[tuple[float, float, float, float]] = field(default_factory=list)
+    sub_image: dict[str, Any] | None = None  # {"source": [x,y,w,h], "target": [x,y,w,h]}
     brightness: int = 0
     contrast: int = 0
     saturation: int = 0
@@ -51,11 +51,11 @@ class CaseData:
         status: 案件狀態
     """
     folder_path: str = ""
-    image_paths: List[str] = field(default_factory=list)
-    image_states: List[ImageState] = field(default_factory=lambda: [
+    image_paths: list[str] = field(default_factory=list)
+    image_states: list[ImageState] = field(default_factory=lambda: [
         ImageState(), ImageState(), ImageState()
     ])
-    meta_data: Dict[str, Any] = field(default_factory=dict)
+    meta_data: dict[str, Any] = field(default_factory=dict)
     status: CaseStatus = CaseStatus.PENDING
 
 
@@ -76,7 +76,7 @@ class DataManager:
 
     def __init__(self):
         """初始化資料管理器"""
-        self.cases: List[CaseData] = []
+        self.cases: list[CaseData] = []
         self.current_case_index: int = -1
 
     def scan_root_folder(self, root_folder: str) -> int:
@@ -152,7 +152,7 @@ class DataManager:
 
         return len(self.cases)
 
-    def _scan_images_in_folder(self, folder: Path) -> List[str]:
+    def _scan_images_in_folder(self, folder: Path) -> list[str]:
         """
         掃描資料夾中的圖片檔案
 
@@ -218,7 +218,7 @@ class DataManager:
         case.image_paths = sorted_paths
         case.image_states = sorted_states[:len(sorted_paths)]
 
-    def _extract_exif_datetime(self, image_path: str) -> Optional[str]:
+    def _extract_exif_datetime(self, image_path: str) -> str | None:
         """
         提取 EXIF 拍攝時間
 
@@ -244,7 +244,7 @@ class DataManager:
 
             return None
 
-        except Exception as e:
+        except Exception:
             # 無法讀取 EXIF（檔案損壞、無 EXIF 等）
             return None
 
@@ -315,7 +315,7 @@ class DataManager:
 
         logger.info(f"Swapped images at index {idx1} and {idx2}")
 
-    def get_current_case(self) -> Optional[CaseData]:
+    def get_current_case(self) -> CaseData | None:
         """
         獲取當前選中的案件
 
@@ -352,7 +352,7 @@ class DataManager:
         case.status = CaseStatus.DONE
         logger.info(f"Case marked as done: {case.folder_path}")
 
-    def get_case_summary(self) -> Dict[str, int]:
+    def get_case_summary(self) -> dict[str, int]:
         """
         獲取案件統計摘要
 
@@ -376,7 +376,7 @@ class DataManager:
 
         return summary
 
-    def get_next_pending_case_index(self) -> Optional[int]:
+    def get_next_pending_case_index(self) -> int | None:
         """
         獲取下一個待處理案件的索引
 
@@ -391,7 +391,7 @@ class DataManager:
 
 # === 快捷訪問介面 ===
 
-_data_manager: Optional[DataManager] = None
+_data_manager: DataManager | None = None
 
 
 def get_data_manager() -> DataManager:

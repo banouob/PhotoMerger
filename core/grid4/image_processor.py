@@ -7,15 +7,15 @@
 3. 合成四格拼圖 (2400×1600)
 """
 
-from PIL import Image, ImageDraw, ImageFont
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+import logging
 import math
+from typing import Any
 
-from utils.paths import get_font_path
+from PIL import Image, ImageDraw, ImageFont
+
 from core.grid4.config_manager import get_config
 from core.image_enhancement import apply_enhancements as _shared_apply_enhancements
-import logging
+from utils.paths import get_font_path
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +33,11 @@ class ImageProcessor:
     # 輸出尺寸
     CANVAS_WIDTH = 2400
     CANVAS_HEIGHT = 1600
-    
+
     # 單張圖片尺寸 (2x2 佈局，3:2 比例)
     CELL_WIDTH = 1200
     CELL_HEIGHT = 800
-    
+
     # 資訊卡尺寸 (右下角，3:2 比例)
     INFO_CARD_WIDTH = 1200
     INFO_CARD_HEIGHT = 800
@@ -95,7 +95,7 @@ class ImageProcessor:
         # 繪製箭頭 (相對座標 → 原影象素)
         arrow_color = self.config.get("default_arrow_color", "#FF0000")
         base_arrow_width = self.config.get("default_arrow_width", 5)
-        
+
         # 根據圖片尺寸自動調整線寬和箭頭大小
         # 假設基準寬度 1200px 對應 5px
         scale_factor = max(1.0, original_width / 1200.0)
@@ -164,7 +164,7 @@ class ImageProcessor:
         # 繪製箭頭
         draw.polygon([(x2, y2), (x3, y3), (x4, y4)], fill=color)
 
-    def _draw_sub_image(self, img: Image.Image, source_img: Image.Image, sub_image_data: Dict[str, Any]):
+    def _draw_sub_image(self, img: Image.Image, source_img: Image.Image, sub_image_data: dict[str, Any]):
         """
         繪製子圖
 
@@ -186,12 +186,14 @@ class ImageProcessor:
         sy = int(src[1] * h)
         sw = int(src[2] * w)
         sh = int(src[3] * h)
-        
+
         # 邊界檢查
         sx = max(0, sx)
         sy = max(0, sy)
-        if sx + sw > w: sw = w - sx
-        if sy + sh > h: sh = h - sy
+        if sx + sw > w:
+            sw = w - sx
+        if sy + sh > h:
+            sh = h - sy
 
         if sw <= 0 or sh <= 0:
             return
@@ -203,7 +205,7 @@ class ImageProcessor:
         ty = int(tgt[1] * h)
         tw = int(tgt[2] * w)
         th = int(tgt[3] * h)
-        
+
         if tw <= 0 or th <= 0:
             return
 
@@ -217,7 +219,7 @@ class ImageProcessor:
         border_width = max(2, int(w * 0.002))  # 0.2% width as border
         draw.rectangle([tx, ty, tx+tw, ty+th], outline="#FFFFFF", width=border_width)
 
-    def create_info_card(self, meta_data: Dict[str, Any]) -> Image.Image:
+    def create_info_card(self, meta_data: dict[str, Any]) -> Image.Image:
         """
         建立資訊卡 (紅色文字，懸掛縮排排版)
 
@@ -275,7 +277,7 @@ class ImageProcessor:
         """
         # 紅色文字
         text_color = "#FF0000"
-        
+
         max_width = self.INFO_CARD_WIDTH - x * 2
 
         # 計算標籤寬度
@@ -305,7 +307,7 @@ class ImageProcessor:
 
     def _wrap_text(self, draw: ImageDraw.Draw, text: str,
                    font: ImageFont.FreeTypeFont,
-                   max_width: int) -> List[str]:
+                   max_width: int) -> list[str]:
         """
         文字換行
 
@@ -341,7 +343,7 @@ class ImageProcessor:
 
         return lines if lines else [""]
 
-    def merge_four_grid(self, images: List[Image.Image],
+    def merge_four_grid(self, images: list[Image.Image],
                         info_card: Image.Image) -> Image.Image:
         """
         合成四格拼圖 (2x2 佈局)
@@ -426,12 +428,12 @@ class ImageProcessor:
         processed_images = []
         for i, img_path in enumerate(case.image_paths[:3]):
             image_state = case.image_states[i] if i < len(case.image_states) else None
-            
+
             if image_state:
                 processed = self.redraw_image(img_path, image_state)
             else:
                 processed = Image.open(img_path).convert("RGB")
-            
+
             processed_images.append(processed)
 
         # 建立資訊卡
@@ -445,7 +447,7 @@ class ImageProcessor:
 
 # === 快捷訪問介面 ===
 
-_image_processor: Optional[ImageProcessor] = None
+_image_processor: ImageProcessor | None = None
 
 
 def get_image_processor() -> ImageProcessor:
