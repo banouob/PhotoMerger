@@ -104,6 +104,82 @@ def launch_4grid_mode(app: QApplication):
     sys.exit(app.exec())
 
 
+def launch_resume_mode(app: QApplication, filepath: str):
+    """
+    從專案檔恢復之前的進度
+
+    流程:
+    1. 讀取專案 JSON
+    2. 驗證路徑
+    3. 依 mode 還原狀態並啟動對應主視窗
+    """
+    from PyQt6.QtWidgets import QMessageBox
+
+    from core.project_manager import load_project, validate_paths
+
+    try:
+        data = load_project(filepath)
+    except Exception as e:
+        QMessageBox.warning(None, "載入失敗", f"無法讀取專案檔:\n{e}")
+        return
+
+    missing = validate_paths(data)
+    if missing:
+        msg = "以下檔案已不存在，將在載入時跳過:\n" + "\n".join(missing[:10])
+        if len(missing) > 10:
+            msg += f"\n... 及其他 {len(missing) - 10} 個檔案"
+        QMessageBox.warning(None, "部分檔案遺失", msg)
+
+    mode = data["mode"]
+    if mode == "p52":
+        launch_p52_resume(app, data)
+    elif mode == "4grid":
+        launch_4grid_resume(app, data)
+
+
+def launch_p52_resume(app: QApplication, data: dict):
+    """
+    從專案資料恢復 P52 模式
+
+    跳過日期輸入和照片選擇，直接還原狀態
+    """
+    from core.p52.data_manager import DataManager
+    from core.p52.image_processor import ImageProcessor
+    from ui.p52.main_window import MainWindow
+
+    data_manager = DataManager.from_dict(data)
+    image_processor = ImageProcessor(data_manager.police_photo_path)
+
+    window = MainWindow(
+        data_manager, image_processor,
+        resume_officer=data.get("selected_officer", ""),
+    )
+    window.show()
+
+    sys.exit(app.exec())
+
+
+def launch_4grid_resume(app: QApplication, data: dict):
+    """
+    從專案資料恢復 4Grid 模式
+
+    跳過掃描資料夾，直接還原案件資料
+    """
+    from core.grid4.data_manager import get_data_manager
+    from ui.grid4.main_window import MainWindow
+
+    data_manager = get_data_manager()
+    count = data_manager.restore_from_dict(data)
+
+    window = MainWindow(
+        resume_scan_root=data.get("scan_root", ""),
+        resume_case_count=count,
+    )
+    window.show()
+
+    sys.exit(app.exec())
+
+
 def main():
     """主程式入口"""
     # 建立應用
@@ -130,6 +206,8 @@ def main():
         launch_p52_mode(app)
     elif mode == ModeSelector.MODE_4GRID:
         launch_4grid_mode(app)
+    elif mode == ModeSelector.MODE_RESUME:
+        launch_resume_mode(app, selector.get_resume_filepath())
     else:
         print(f"未知模式: {mode}")
         sys.exit(1)

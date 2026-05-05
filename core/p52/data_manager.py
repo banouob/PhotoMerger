@@ -307,3 +307,26 @@ class DataManager:
         return self.enhancement_params.get(
             photo_path, {"brightness": 0, "contrast": 0, "saturation": 0, "sharpness": 0}
         )
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """
+        從專案檔 dict 建立 DataManager 實例
+
+        Args:
+            data: load_project() 回傳的 P52 專案資料
+
+        Returns:
+            已還原狀態的 DataManager 實例
+        """
+        dm = cls(
+            police_photo_path=data["police_photo_path"],
+            target_photo_paths=data["target_photo_paths"],
+            roc_date_str=data["roc_date_str"],
+            ad_date_str=data["ad_date_str"],
+        )
+        dm.current_index = data.get("current_index", 0)
+        dm.processing_status = data.get("processing_status", {})
+        dm.output_history = data.get("output_history", {})
+        dm.enhancement_params = data.get("enhancement_params", {})
+        return dm

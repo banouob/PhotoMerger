@@ -10,6 +10,7 @@ PhotoMerger_P52 的主用戶介面
 """
 
 import json
+import logging
 import os
 
 from PyQt6.QtCore import Qt, QTimer
@@ -37,6 +38,8 @@ from ui.p52.editor_canvas import EditorCanvas
 from utils.paths import get_config_dir
 from utils.validators import sanitize_filename
 
+logger = logging.getLogger(__name__)
+
 
 class MainWindow(QMainWindow):
     """
@@ -46,7 +49,8 @@ class MainWindow(QMainWindow):
     """
 
     def __init__(
-        self, data_manager: DataManager, image_processor: ImageProcessor, parent=None
+        self, data_manager: DataManager, image_processor: ImageProcessor,
+        parent=None, resume_officer: str = "",
     ):
         """
         初始化主視窗
@@ -55,12 +59,14 @@ class MainWindow(QMainWindow):
             data_manager: 數據管理器
             image_processor: 圖像處理器
             parent: 父部件
+            resume_officer: 從專案檔恢復的警員選擇（可選）
         """
         super().__init__(parent)
 
         self.data_manager = data_manager
         self.image_processor = image_processor
         self.date_str = data_manager.date_str  # 從data_manager獲取日期
+        self._resume_officer = resume_officer
 
         # 警員清單（從 config.json 載入）
         self._p52_officers: list = self._load_p52_officers()
@@ -82,6 +88,14 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._connect_signals()
         self._load_first_photo()
+
+        # 恢復警員選擇（如有）
+        if self._resume_officer:
+            idx = self.officer_id_combo.findText(self._resume_officer)
+            if idx >= 0:
+                self.officer_id_combo.setCurrentIndex(idx)
+            else:
+                self.officer_id_combo.setCurrentText(self._resume_officer)
 
     def _init_ui(self):
         """
@@ -568,3 +582,18 @@ class MainWindow(QMainWindow):
             )
         else:
             QMessageBox.critical(self, "錯誤", "圖像處理失敗!")
+
+    def closeEvent(self, event):
+        """視窗關閉時自動儲存專案進度並清理資源"""
+        try:
+            from core.project_manager import get_default_project_path, save_p52_project
+
+            base_dir = self.data_manager.get_base_dir()
+            if base_dir:
+                filepath = get_default_project_path("p52", base_dir)
+                officer = self.officer_id_combo.currentText().strip()
+                save_p52_project(self.data_manager, officer, filepath)
+        except Exception as e:
+            logger.warning(f"無法儲存 P52 專案進度: {e}")
+        self.ocr_manager.cleanup()
+        super().closeEvent(event)

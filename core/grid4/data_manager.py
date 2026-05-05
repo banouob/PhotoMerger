@@ -388,6 +388,42 @@ class DataManager:
                 return i
         return None
 
+    def restore_from_dict(self, data: dict) -> int:
+        """
+        從專案檔 dict 恢復 DataManager 狀態
+
+        Args:
+            data: load_project() 回傳的 4Grid 專案資料
+
+        Returns:
+            恢復的案件數量
+        """
+        from dataclasses import fields as dc_fields
+
+        self.cases.clear()
+        self.current_case_index = data.get("current_case_index", -1)
+
+        # 取得 ImageState 所有欄位名稱，用於過濾
+        state_field_names = {f.name for f in dc_fields(ImageState)}
+
+        for case_data in data.get("cases", []):
+            # 重建 ImageState 列表
+            image_states = []
+            for s in case_data.get("image_states", []):
+                filtered = {k: v for k, v in s.items() if k in state_field_names}
+                image_states.append(ImageState(**filtered))
+
+            case = CaseData(
+                folder_path=case_data.get("folder_path", ""),
+                image_paths=case_data.get("image_paths", []),
+                image_states=image_states,
+                meta_data=case_data.get("meta_data", {}),
+                status=CaseStatus(case_data.get("status", "pending")),
+            )
+            self.cases.append(case)
+
+        return len(self.cases)
+
 
 # === 快捷訪問介面 ===
 

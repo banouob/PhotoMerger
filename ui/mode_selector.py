@@ -1,12 +1,19 @@
 """
 模式選擇器
 
-提供 P52 和 4Grid 模式選擇介面
+提供 P52 和 4Grid 模式選擇介面，以及繼續之前進度的功能
 """
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+)
 
 
 class ModeSelector(QDialog):
@@ -20,17 +27,19 @@ class ModeSelector(QDialog):
 
     MODE_P52 = "p52"
     MODE_4GRID = "4grid"
+    MODE_RESUME = "resume"
 
     def __init__(self, parent=None):
         """初始化模式選擇器"""
         super().__init__(parent)
         self.selected_mode = None
+        self.resume_filepath = None
         self._init_ui()
 
     def _init_ui(self):
         """初始化使用者介面"""
         self.setWindowTitle("PhotoMerger - 選擇模式")
-        self.setFixedSize(500, 350)
+        self.setFixedSize(500, 420)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(30, 30, 30, 30)
@@ -105,6 +114,39 @@ class ModeSelector(QDialog):
         btn_layout.addWidget(self.btn_4grid)
 
         layout.addLayout(btn_layout)
+
+        # 分隔線
+        sep = QLabel("— 或是 —")
+        sep.setFont(QFont("Microsoft YaHei UI", 9))
+        sep.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sep.setStyleSheet("color: #999;")
+        layout.addWidget(sep)
+
+        # 繼續之前進度按鈕
+        self.btn_resume = QPushButton("📂 繼續之前進度")
+        self.btn_resume.setFont(QFont("Microsoft YaHei UI", 11))
+        self.btn_resume.setMinimumSize(200, 40)
+        self.btn_resume.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_resume.setToolTip("載入先前儲存的專案檔 (.photomerger_*.json)")
+        self.btn_resume.setStyleSheet("""
+            QPushButton {
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #F57C00;
+            }
+            QPushButton:pressed {
+                background-color: #EF6C00;
+            }
+        """)
+        self.btn_resume.clicked.connect(self._on_resume)
+        layout.addWidget(self.btn_resume)
+
         layout.addStretch()
 
         # 整體樣式
@@ -124,6 +166,20 @@ class ModeSelector(QDialog):
         self.selected_mode = mode
         self.accept()
 
+    def _on_resume(self):
+        """處理繼續之前進度按鈕"""
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "選擇專案檔",
+            "",
+            "PhotoMerger 專案檔 (.photomerger_*.json);;所有檔案 (*)",
+        )
+
+        if filepath:
+            self.resume_filepath = filepath
+            self.selected_mode = self.MODE_RESUME
+            self.accept()
+
     def get_selected_mode(self) -> str:
         """
         獲取選擇的模式
@@ -132,3 +188,12 @@ class ModeSelector(QDialog):
             模式字串，如果未選擇返回 None
         """
         return self.selected_mode
+
+    def get_resume_filepath(self) -> str | None:
+        """
+        獲取 resume 模式的專案檔路徑
+
+        Returns:
+            JSON 檔案路徑，非 resume 模式時返回 None
+        """
+        return self.resume_filepath

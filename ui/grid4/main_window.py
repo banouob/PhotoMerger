@@ -49,8 +49,13 @@ class MainWindow(QMainWindow):
     └─────────────────────────────────────────────────────┘
     """
 
-    def __init__(self):
-        """初始化主視窗"""
+    def __init__(self, resume_scan_root: str = "", resume_case_count: int = 0):
+        """初始化主視窗
+
+        Args:
+            resume_scan_root: 從專案檔恢復時的掃描根目錄
+            resume_case_count: 從專案檔恢復時的案件數量
+        """
         super().__init__()
 
         # 獲取配置和資料管理器
@@ -66,6 +71,10 @@ class MainWindow(QMainWindow):
         # 初始化 UI
         self._init_ui()
         self._connect_signals()
+
+        # 若從專案檔恢復，直接顯示已儲存的案件
+        if resume_scan_root and resume_case_count > 0:
+            self._restore_from_project(resume_scan_root, resume_case_count)
 
     def _init_ui(self):
         """初始化使用者介面"""
@@ -276,6 +285,29 @@ class MainWindow(QMainWindow):
             "掃描完成",
             f"成功掃描 {count} 個案件\n\n路徑: {folder}"
         )
+
+    def _restore_from_project(self, scan_root: str, case_count: int):
+        """從專案檔恢復 UI 狀態（跳過掃描步驟）"""
+        self.current_scan_root = scan_root
+        self._update_case_list()
+        self._update_stats()
+        self.statusbar.showMessage(f"已恢復進度 - {case_count} 個案件")
+
+        # 載入第一個案件的圖片
+        current_case = self.data_manager.get_current_case()
+        if current_case and current_case.image_paths:
+            self.thumbnail_list.load_images(current_case.image_paths)
+            if current_case.image_paths:
+                self.canvas_view.load_image(current_case.image_paths[0], save_state=False)
+                exif_time = self.data_manager._extract_exif_datetime(current_case.image_paths[0])
+                if exif_time:
+                    roc_time = self.data_manager.convert_to_roc_datetime(exif_time)
+                    self.control_panel.set_datetime(roc_time)
+
+            # 恢復 metadata 到控制面板
+            meta = current_case.meta_data
+            if meta:
+                self.control_panel.set_metadata(meta)
 
     def _on_case_changed(self, index: int):
         """案件選擇改變槽函式"""
@@ -641,7 +673,27 @@ class MainWindow(QMainWindow):
             self.statusbar.showMessage("OCR 模型載入完成")
 
     def closeEvent(self, event):
-        """關閉視窗事件 - 清理背景執行緒"""
+        """關閉視窗事件 - 儲存進度並清理背景執行緒"""
+        # 儲存當前畫布狀態
+        try:
+            if self.canvas_view.current_image_path:
+                self.canvas_view._save_current_state_to_data_manager()
+        except Exception:
+            pass
+
+        # 儲存專案進度
+        try:
+            from core.project_manager import (
+                get_default_project_path,
+                save_4grid_project,
+            )
+
+            if self.current_scan_root:
+                filepath = get_default_project_path("4grid", self.current_scan_root)
+                save_4grid_project(self.data_manager, self.current_scan_root, filepath)
+        except Exception:
+            pass
+
         self.ocr_manager.cleanup()
         self.canvas_view.enhancement_manager.cleanup()
         super().closeEvent(event)
